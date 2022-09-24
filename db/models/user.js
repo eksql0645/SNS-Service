@@ -27,9 +27,9 @@ module.exports = class User extends Sequelize.Model {
           type: Sequelize.STRING(70),
           allowNull: false,
         },
-        intro: {
+        info: {
           type: Sequelize.STRING(150),
-          allowNull: false,
+          allowNull: true,
           defaultValue: null,
         },
       },
