@@ -8,6 +8,7 @@ module.exports = {
   // USER
   canNotFindUser: '존재하지 않는 회원입니다.',
   alreadySignUpEmail: '이미 가입된 이메일입니다.',
+  notCorrectPassword: '비밀번호가 일치하지 않습니다.',
   // validator
   required: '필수 값입니다.',
   wrongFormat: '형식을 맞춰주세요.',

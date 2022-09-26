@@ -7,6 +7,7 @@ const routers = require('./routers');
 const errorHandler = require('./middlewares/errorHandler');
 const errorCodes = require('./utils/errorCodes');
 const { swaggerUi, specs } = require('./swagger');
+const redisConenct = require('./db/redis');
 
 const app = express();
 
@@ -19,6 +20,7 @@ sequelize
     console.log('Failed to sync database: ' + err.message);
   });
 
+app.use(redisConenct);
 if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
