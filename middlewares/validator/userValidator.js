@@ -43,13 +43,6 @@ function signupValidator() {
 
 function loginValidator() {
   return [
-    body('nick')
-      .notEmpty()
-      .bail()
-      .withMessage(errorCodes.required)
-      .trim()
-      .isLength({ max: 15 })
-      .withMessage(errorCodes.wrongFormat),
     body('email')
       .notEmpty()
       .bail()
