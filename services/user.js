@@ -48,7 +48,7 @@ const getToken = async (userInfo, redis) => {
   const { email, password } = userInfo;
 
   // 이메일로 회원 확인
-  let user = await userModel.findUserByEmail(email);
+  const user = await userModel.findUserByEmail(email);
   if (!user) {
     throw new Error(errorCodes.canNotFindUser);
   }
@@ -76,7 +76,7 @@ const getToken = async (userInfo, redis) => {
 };
 
 /**
- * 회원조회
+ * 회원 조회
  * @author JKS <eksql0645@gmail.com>
  * @function getUser
  * @param {String} userId user id
@@ -84,11 +84,60 @@ const getToken = async (userInfo, redis) => {
  */
 const getUser = async (userId) => {
   // 회원 확인
+  const user = await userModel.findUserById(userId);
+  if (!user) {
+    throw new Error(errorCodes.canNotFindUser);
+  }
+  user.password = null;
+  return user;
+};
+
+/**
+ * 회원 수정
+ * @author JKS <eksql0645@gmail.com>
+ * @function setUser
+ * @param {Object} updateInfo 업데이트 정보
+ * @param {String} email 수정할 email
+ * @param {String} nick 수정할 닉네임
+ * @param {String} password 수정할 password
+ * @param {String} currentPassword 현재 password
+ * @param {String} userId user id
+ * @returns {Object} 수정된 user 객체
+ */
+const setUser = async (updateInfo) => {
+  const { currentPassword, password, userId } = updateInfo;
+
+  // 회원 확인
   let user = await userModel.findUserById(userId);
   if (!user) {
     throw new Error(errorCodes.canNotFindUser);
   }
+
+  // 현재 비밀번호 일치 확인
+  const hashedPassword = user.password;
+  const isMatched = await bcrypt.compare(currentPassword, hashedPassword);
+  if (!isMatched) {
+    throw new Error(errorCodes.notCorrectPassword);
+  }
+
+  // 비밀번호 수정하는 경우 해쉬화
+  if (password) {
+    const newHashedPassword = await bcrypt.hash(password, 10);
+    updateInfo.password = newHashedPassword;
+  }
+
+  const isUpdated = await userModel.updateUser(updateInfo);
+
+  if (!isUpdated) {
+    throw new Error(errorCodes.serverError);
+  }
+  if (!isUpdated[0]) {
+    throw new Error(errorCodes.notUpdate);
+  }
+
+  user = await userModel.findUserById(userId);
+  user.password = null;
   return user;
 };
 
-module.exports = { addUser, getToken, getUser };
+module.exports = { addUser, getToken, getUser, setUser };

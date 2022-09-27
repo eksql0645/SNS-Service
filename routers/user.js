@@ -41,4 +41,16 @@ userRouter.get('/', loginRequired, async (req, res, next) => {
   }
 });
 
+userRouter.patch('/', loginRequired, async (req, res, next) => {
+  try {
+    const { email, nick, password, currentPassword } = req.body;
+    const userId = req.currentUserId;
+    const updateInfo = { email, nick, password, currentPassword, userId };
+    const user = await userService.setUser(updateInfo);
+    res.status(201).json(user);
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = userRouter;

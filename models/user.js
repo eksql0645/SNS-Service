@@ -15,4 +15,13 @@ const createUser = async (userInfo) => {
   return user;
 };
 
-module.exports = { createUser, findUserByEmail, findUserById };
+const updateUser = async (userInfo) => {
+  const { email, nick, password, userId } = userInfo;
+  const user = await User.update(
+    { email, password, nick },
+    { where: { id: userId } }
+  );
+  return user;
+};
+
+module.exports = { createUser, updateUser, findUserByEmail, findUserById };
