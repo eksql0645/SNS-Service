@@ -24,4 +24,15 @@ const updateUser = async (userInfo) => {
   return user;
 };
 
-module.exports = { createUser, updateUser, findUserByEmail, findUserById };
+const destroyUser = async (userId) => {
+  const result = await User.destroy({ where: { id: userId } });
+  return result;
+};
+
+module.exports = {
+  createUser,
+  updateUser,
+  destroyUser,
+  findUserByEmail,
+  findUserById,
+};

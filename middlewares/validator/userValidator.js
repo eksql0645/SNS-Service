@@ -115,4 +115,31 @@ function setUserValidator() {
   ];
 }
 
-module.exports = { signupValidator, loginValidator, setUserValidator };
+function deleteUserValidator() {
+  return [
+    body('currentPassword')
+      .notEmpty()
+      .bail()
+      .withMessage(errorCodes.required)
+      .trim()
+      .isLength({ min: 8, max: 16 })
+      .bail()
+      .withMessage(errorCodes.wrongPwdFormat)
+      .matches(/[A-za-z]/)
+      .bail()
+      .withMessage(errorCodes.wrongPwdFormat)
+      .matches(/[~!@#$%^&*()_+|<>?:{}]/)
+      .bail()
+      .withMessage(errorCodes.wrongPwdFormat)
+      .matches(/[0-9]/)
+      .withMessage(errorCodes.wrongPwdFormat),
+    index,
+  ];
+}
+
+module.exports = {
+  signupValidator,
+  loginValidator,
+  setUserValidator,
+  deleteUserValidator,
+};

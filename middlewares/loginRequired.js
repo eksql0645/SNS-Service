@@ -16,7 +16,6 @@ async function loginRequired(req, res, next) {
   // 정상적인 token인지 확인
   try {
     const result = accessTokenVerify(userToken);
-    console.log(result);
 
     // 만료 확인
     const gap = checkExpiredTime(result);

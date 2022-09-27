@@ -140,4 +140,43 @@ const setUser = async (updateInfo) => {
   return user;
 };
 
-module.exports = { addUser, getToken, getUser, setUser };
+/**
+ * 회원 삭제
+ * @author JKS <eksql0645@gmail.com>
+ * @function deleteUser
+ * @param {String} userId user id
+ * @param {String} currentPassword 현재 password
+ * @returns {Object} 삭제 확인 메세지
+ */
+const deleteUser = async (userId, redis, currentPassword) => {
+  // 회원 확인
+  let user = await userModel.findUserById(userId);
+  if (!user) {
+    throw new Error(errorCodes.canNotFindUser);
+  }
+
+  // 현재 비밀번호 일치 확인
+  const hashedPassword = user.password;
+  const isMatched = await bcrypt.compare(currentPassword, hashedPassword);
+  if (!isMatched) {
+    throw new Error(errorCodes.notCorrectPassword);
+  }
+
+  // 삭제 유저 레디스에 저장
+  await redis.json.set(`deletedUser: ${user.id}`, '$', user.dataValues);
+
+  // 30일 경과하면 삭제
+  await redis.expire(`deletedUser: ${user.id}`, 1296000);
+
+  const isdeleted = await userModel.destroyUser(userId);
+
+  if (!isdeleted) {
+    throw new Error(errorCodes.serverError);
+  }
+
+  const result = { message: '탈퇴되었습니다.' };
+
+  return result;
+};
+
+module.exports = { addUser, getToken, getUser, setUser, deleteUser };
