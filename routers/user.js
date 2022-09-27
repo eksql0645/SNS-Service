@@ -5,6 +5,7 @@ const {
   signupValidator,
   loginValidator,
 } = require('../middlewares/validator/userValidator');
+const { loginRequired } = require('../middlewares/loginRequired');
 
 userRouter.post('/signup', signupValidator(), async (req, res, next) => {
   try {
@@ -30,7 +31,7 @@ userRouter.post('/login', loginValidator(), async (req, res, next) => {
   }
 });
 
-userRouter.get('/', async (req, res, next) => {
+userRouter.get('/', loginRequired, async (req, res, next) => {
   try {
     const userId = req.currentUserId;
     const user = await userService.getUser(userId);
