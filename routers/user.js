@@ -30,4 +30,14 @@ userRouter.post('/login', loginValidator(), async (req, res, next) => {
   }
 });
 
+userRouter.get('/', async (req, res, next) => {
+  try {
+    const userId = req.currentUserId;
+    const user = await userService.getUser(userId);
+    res.status(201).json(user);
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = userRouter;

@@ -59,8 +59,9 @@ const getToken = async (userInfo, redis) => {
     throw new Error(errorCodes.notCorrectPassword);
   }
 
+  const userId = user.id;
   // 토큰 생성
-  const accessToken = createToken.accessToken(user);
+  const accessToken = createToken.accessToken(userId);
   const refreshToken = createToken.refreshToken();
 
   // refreshToken Redis에 캐싱
@@ -74,4 +75,20 @@ const getToken = async (userInfo, redis) => {
   return token;
 };
 
-module.exports = { addUser, getToken };
+/**
+ * 회원조회
+ * @author JKS <eksql0645@gmail.com>
+ * @function getUser
+ * @param {String} userId user id
+ * @returns {Object} user id에 해당하는 유저 객체
+ */
+const getUser = async (userId) => {
+  // 회원 확인
+  let user = await userModel.findUserById(userId);
+  if (!user) {
+    throw new Error(errorCodes.canNotFindUser);
+  }
+  return user;
+};
+
+module.exports = { addUser, getToken, getUser };
