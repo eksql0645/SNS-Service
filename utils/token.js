@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const moment = require('moment');
+const errorCodes = require('./errorCodes');
 const secret = process.env.JWT_SECRET_KEY;
 
 module.exports = {
@@ -17,21 +18,15 @@ module.exports = {
   accessTokenVerify: (token) => {
     // access token 검증
     try {
-      const jwtDecoded = jwt.verify(token, secret);
-      return {
-        isDecoded: true,
-        jwtDecoded,
-      };
+      const accessDecoded = jwt.verify(token, secret);
+      return accessDecoded;
     } catch (err) {
-      return {
-        isDecoded: false,
-        message: err.message,
-      };
+      return err;
     }
   },
   // refresh token 발급
   refreshToken: () => {
-    return jwt.sign({}, secret, {
+    return jwt.sign({ iat: moment().valueOf() }, secret, {
       algorithm: 'HS256',
       expiresIn: '14d',
     });
@@ -41,19 +36,16 @@ module.exports = {
       const refreshToken = await redis.HGET('refreshToken', userId);
       if (token === refreshToken) {
         try {
-          jwt.verify(token, secret);
-          return true;
+          const refreshDecoded = jwt.verify(token, secret);
+          return refreshDecoded;
         } catch (err) {
-          console.log(err);
-          return false;
+          return err;
         }
       } else {
-        console.error();
-        return false;
+        throw new Error(errorCodes.notMatchToken);
       }
     } catch (err) {
-      console.log(err);
-      return false;
+      return err;
     }
   },
 };

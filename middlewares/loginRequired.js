@@ -1,6 +1,6 @@
 const errorCodes = require('../utils/errorCodes');
 const { accessTokenVerify } = require('../utils/token');
-const moment = require('moment');
+const checkExpiredTime = require('../utils/expiredTime');
 
 async function loginRequired(req, res, next) {
   //req.headers['authorization']가 있다면 토큰을 할당
@@ -16,16 +16,11 @@ async function loginRequired(req, res, next) {
   // 정상적인 token인지 확인
   try {
     const result = accessTokenVerify(userToken);
-    // decoded 되지 않은 경우
-    if (!result.isDecoded) {
-      throw new Error(errorCodes.unusualToken);
-    }
+    console.log(result);
 
     // 만료 확인
-    const issuedTime = moment(result.jwtDecoded.exp);
+    const gap = checkExpiredTime(result);
     const expiredTime = 60;
-    const currentTime = moment();
-    const gap = currentTime.diff(issuedTime, 'minutes');
 
     // 만료된 경우
     if (gap > expiredTime) {
@@ -33,7 +28,7 @@ async function loginRequired(req, res, next) {
     }
 
     // req.currentUserId를 통해 유저의 id에 접근 가능하게 됨
-    req.currentUserId = result.jwtDecoded.userId;
+    req.currentUserId = result.userId;
 
     next();
   } catch (err) {

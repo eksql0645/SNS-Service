@@ -1,6 +1,6 @@
 const { Router } = require('express');
 const userRouter = Router();
-const userService = require('../services/user');
+const { userService } = require('../services');
 const {
   signupValidator,
   loginValidator,
