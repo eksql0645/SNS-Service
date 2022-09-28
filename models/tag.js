@@ -1,12 +1,8 @@
 const { Tag } = require('../db');
 
-const createTag = async (tagList) => {
-  await Promise.all(
-    tagList.map(async (tag) => {
-      return await Tag.create(tag);
-    })
-  );
-  return;
+const createTag = async (tag) => {
+  const newTag = await Tag.create(tag);
+  return newTag;
 };
 
 const findTag = async (tag) => {

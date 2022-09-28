@@ -59,6 +59,7 @@ module.exports = class Post extends Sequelize.Model {
       sourceKey: 'id',
     });
     db.Post.belongsToMany(db.Tag, {
+      as: 'Tag',
       through: 'PostTag',
       targetKey: 'id',
       foreignKey: 'postId',

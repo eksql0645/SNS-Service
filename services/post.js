@@ -1,5 +1,5 @@
 const bcrypt = require('bcrypt');
-const { postModel, userModel, tagModel } = require('../models');
+const { postModel, userModel, tagModel, postTagModel } = require('../models');
 const errorCodes = require('../utils/errorCodes');
 const { nanoid } = require('nanoid');
 
@@ -25,8 +25,14 @@ const addPost = async (postInfo) => {
     // 회원의 닉네임을 작성자명으로 설정
     postInfo.writer = user.nick;
 
+    // 비밀번호 해쉬화
+    postInfo.password = await bcrypt.hash(postInfo.password, 10);
+
     // 문자열로 된 태그 구분 짓기
     let tagList = postInfo.tag.split(',');
+
+    // postInfo에서 tag 삭제
+    delete postInfo.tag;
 
     // 각 태그를 id와 함께 객체로 재구성
     tagList = await Promise.all(
@@ -47,18 +53,16 @@ const addPost = async (postInfo) => {
       return tag !== undefined;
     });
 
-    // 새로운 tag가 존재할 경우 tag 생성
-    if (tagList.length !== 0) {
-      await tagModel.createTag(tagList);
-    }
-
-    // postInfo에서 tag 삭제
-    delete postInfo.tag;
-
-    // 비밀번호 해쉬화
-    postInfo.password = await bcrypt.hash(postInfo.password, 10);
-
+    // 게시글 생성
     const post = await postModel.createPost(postInfo);
+
+    // 게시글 생성 후 새로운 tag가 존재하면 tag 및 중간테이블 데이터 생성
+    if (tagList.length !== 0) {
+      tagList.map(async (tag) => {
+        const newTag = await tagModel.createTag(tag);
+        await postTagModel.createPostTag(newTag.id, post.id);
+      });
+    }
 
     return post;
   } catch (err) {
