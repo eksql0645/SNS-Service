@@ -31,6 +31,11 @@ module.exports = class Post extends Sequelize.Model {
           allowNull: true,
           defaultValue: null,
         },
+        password: {
+          type: Sequelize.STRING(70),
+          allowNull: true,
+          defaultValue: null,
+        },
       },
       {
         sequelize,
@@ -46,7 +51,7 @@ module.exports = class Post extends Sequelize.Model {
   }
   static associate(db) {
     db.Post.belongsTo(db.User, {
-      foreignKey: 'post_userId',
+      foreignKey: 'postUserId',
       targetKey: 'id',
     });
     db.Post.hasMany(db.Comment, {
@@ -56,7 +61,7 @@ module.exports = class Post extends Sequelize.Model {
     db.Post.belongsToMany(db.Tag, {
       through: 'PostTag',
       targetKey: 'id',
-      foreignKey: 'post_id',
+      foreignKey: 'postId',
     });
   }
 };
