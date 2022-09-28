@@ -1,4 +1,4 @@
-const userModel = require('../models/user');
+const { userModel } = require('../models');
 const errorCodes = require('../utils/errorCodes');
 const bcrypt = require('bcrypt');
 const { nanoid } = require('nanoid');
