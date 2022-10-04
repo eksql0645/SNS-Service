@@ -4,6 +4,7 @@ const { loginRequired } = require('../middlewares/loginRequired');
 const { postService } = require('../services');
 const { addPostValidator } = require('../middlewares/validator/postValidator');
 const weatherAPI = require('../utils/weather');
+const errorCodes = require('../utils/errorCodes');
 const postRouter = Router();
 
 postRouter.post(
@@ -28,6 +29,9 @@ postRouter.post(
       };
 
       const post = await postService.addPost(postInfo);
+      if (!post) {
+        throw new Error(errorCodes.canNotCreatePost);
+      }
       post.password = null;
       res.status(201).json(post);
     } catch (err) {
@@ -35,5 +39,14 @@ postRouter.post(
     }
   }
 );
+
+postRouter.get('/', async (req, res, next) => {
+  try {
+    const posts = await postService.getPosts(req.query);
+    res.status(201).json(posts);
+  } catch (err) {
+    next(err);
+  }
+});
 
 module.exports = postRouter;

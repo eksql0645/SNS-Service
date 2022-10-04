@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const { postModel, userModel, tagModel, postTagModel } = require('../models');
 const errorCodes = require('../utils/errorCodes');
 const { nanoid } = require('nanoid');
+const getQuery = require('../utils/getQuery');
 
 /**
  * 게시글 생성
@@ -35,39 +36,96 @@ const addPost = async (postInfo) => {
     delete postInfo.tag;
 
     // 각 태그를 id와 함께 객체로 재구성
+
     tagList = await Promise.all(
       tagList.map(async (tag) => {
+        // 이미 존재하는 태그인지 확인
         const isExistedTag = await tagModel.findTag(tag);
-        // 이미 존재하는 태그라면 생성하지 않음
+        // 새로운 태그라면 nanoid와 tag 할당
         if (!isExistedTag) {
           return {
             id: nanoid(),
             tag,
           };
         }
+        // 이미 존재하는 태그라면 기존 태그의 id만 반환
+        return {
+          id: isExistedTag.id,
+        };
       })
     );
 
-    // tagList 중 존재하지 않는 값 제거
-    tagList = tagList.filter((tag) => {
-      return tag !== undefined;
+    // 이미 존재하는 태그의 경우
+    const existedTag = tagList.filter((ele) => {
+      return !ele.tag;
+    });
+
+    // 새로운 태그의 경우
+    const newTag = tagList.filter((ele) => {
+      return ele.tag;
     });
 
     // 게시글 생성
     const post = await postModel.createPost(postInfo);
 
-    // 게시글 생성 후 새로운 tag가 존재하면 tag 및 중간테이블 데이터 생성
+    // 게시글 생성 후 tag 및 중간테이블 데이터 생성
     if (tagList.length !== 0) {
-      tagList.map(async (tag) => {
-        const newTag = await tagModel.createTag(tag);
-        await postTagModel.createPostTag(newTag.id, post.id);
-      });
+      // 기존에 생성된 태그가 있는 경우
+      if (existedTag.length !== 0) {
+        // 중간테이블 데이터만 생성
+        existedTag.map(async (tag) => {
+          await postTagModel.createPostTag(tag.id, post.id);
+        });
+      }
+      // 새로운 태그가 있는 경우
+      if (newTag.length !== 0) {
+        // 태그 및 중간테이블 데이터 생성
+        newTag.map(async (tag) => {
+          const newTag = await tagModel.createTag(tag);
+          await postTagModel.createPostTag(newTag.id, post.id);
+        });
+      }
     }
-
     return post;
   } catch (err) {
     return err;
   }
 };
 
-module.exports = { addPost };
+/**
+ * 게시글 전체조회
+ * @author JKS <eksql0645@gmail.com>
+ * @function getPosts
+ * @param {Int} page 현재 페이지
+ * @returns {Array} 조회된 post 객체들이 담긴 배열
+ */
+const getPosts = async (data) => {
+  try {
+    // 페이지네이션
+    let { page, limit } = data;
+
+    // default: 10/page
+    if (!limit) {
+      limit = 10;
+    }
+
+    let offset = 0;
+    page = parseInt(page);
+    limit = parseInt(limit);
+
+    if (page > 1) {
+      offset = limit * (page - 1);
+    }
+
+    // 쿼리
+    const query = getQuery(data);
+
+    const posts = await postModel.findPosts(offset, limit, query);
+
+    return posts;
+  } catch (err) {
+    return err;
+  }
+};
+
+module.exports = { addPost, getPosts };
