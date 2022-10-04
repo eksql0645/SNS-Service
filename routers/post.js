@@ -49,4 +49,15 @@ postRouter.get('/', async (req, res, next) => {
   }
 });
 
+postRouter.get('/:id', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const post = await postService.getPost(id);
+    post.password = null;
+    res.status(201).json(post);
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = postRouter;

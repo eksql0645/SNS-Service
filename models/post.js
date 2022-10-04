@@ -42,4 +42,9 @@ const findPosts = async (offset, limit, query) => {
   return posts;
 };
 
-module.exports = { createPost, findPosts };
+const findPost = async (id) => {
+  const post = await Post.findOne({ where: { id } });
+  return post;
+};
+
+module.exports = { createPost, findPosts, findPost };

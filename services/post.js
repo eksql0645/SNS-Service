@@ -96,7 +96,7 @@ const addPost = async (postInfo) => {
  * 게시글 전체조회
  * @author JKS <eksql0645@gmail.com>
  * @function getPosts
- * @param {Int} page 현재 페이지
+ * @param {Object} data req.query
  * @returns {Array} 조회된 post 객체들이 담긴 배열
  */
 const getPosts = async (data) => {
@@ -121,6 +121,9 @@ const getPosts = async (data) => {
     const query = getQuery(data);
 
     const posts = await postModel.findPosts(offset, limit, query);
+    if (posts.length === 0) {
+      return { message: errorCodes.canNotFindPost };
+    }
 
     return posts;
   } catch (err) {
@@ -128,4 +131,23 @@ const getPosts = async (data) => {
   }
 };
 
-module.exports = { addPost, getPosts };
+/**
+ * 게시글 조회
+ * @author JKS <eksql0645@gmail.com>
+ * @function getPost
+ * @param {String} id 게시글 id
+ * @returns {Object} 조회된 게시글 객체
+ */
+const getPost = async (id) => {
+  try {
+    const post = await postModel.findPost(id);
+    if (!post) {
+      throw new Error(errorCodes.canNotFindPost);
+    }
+    return post;
+  } catch (err) {
+    return err;
+  }
+};
+
+module.exports = { addPost, getPosts, getPost };

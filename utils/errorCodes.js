@@ -10,6 +10,8 @@ module.exports = {
   alreadySignUpEmail: '이미 가입된 이메일입니다.',
   notCorrectPassword: '비밀번호가 일치하지 않습니다.',
   failedSignUp: '회원가입 중 문제가 생겼습니다. 다시 시도해주세요.',
+  // POST
+  canNotFindPost: '게시글이 존재하지 않습니다.',
   canNotCreatePost: '게시글이 생성되지 않았습니다.',
   // validator
   required: '필수 값입니다.',
