@@ -3,7 +3,11 @@ const { nanoid } = require('nanoid');
 const { loginRequired } = require('../middlewares/loginRequired');
 const { isLogined } = require('../middlewares/isLogined');
 const { postService } = require('../services');
-const { addPostValidator } = require('../middlewares/validator/postValidator');
+const {
+  addPostValidator,
+  getPostsValidator,
+  paramValidator,
+} = require('../middlewares/validator/postValidator');
 const weatherAPI = require('../utils/weather');
 const errorCodes = require('../utils/errorCodes');
 const postRouter = Router();
@@ -41,7 +45,7 @@ postRouter.post(
   }
 );
 
-postRouter.get('/', async (req, res, next) => {
+postRouter.get('/', getPostsValidator(), async (req, res, next) => {
   try {
     const posts = await postService.getPosts(req.query);
     res.status(201).json(posts);
@@ -50,7 +54,7 @@ postRouter.get('/', async (req, res, next) => {
   }
 });
 
-postRouter.get('/:id', isLogined, async (req, res, next) => {
+postRouter.get('/:id', isLogined, paramValidator(), async (req, res, next) => {
   try {
     const { id } = req.params;
     const userId = req.currentUserId;
@@ -63,28 +67,38 @@ postRouter.get('/:id', isLogined, async (req, res, next) => {
   }
 });
 
-postRouter.post('/:id/liker', loginRequired, async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const userId = req.currentUserId;
-    const redis = req.app.get('redis');
-    const result = await postService.likePost(id, userId, redis);
-    res.status(201).json(result);
-  } catch (err) {
-    next(err);
+postRouter.post(
+  '/:id/liker',
+  loginRequired,
+  paramValidator(),
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const userId = req.currentUserId;
+      const redis = req.app.get('redis');
+      const result = await postService.likePost(id, userId, redis);
+      res.status(201).json(result);
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
-postRouter.delete('/:id/liker', loginRequired, async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const userId = req.currentUserId;
-    const redis = req.app.get('redis');
-    const result = await postService.unlikePost(id, userId, redis);
-    res.status(201).json(result);
-  } catch (err) {
-    next(err);
+postRouter.delete(
+  '/:id/liker',
+  loginRequired,
+  paramValidator(),
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const userId = req.currentUserId;
+      const redis = req.app.get('redis');
+      const result = await postService.unlikePost(id, userId, redis);
+      res.status(201).json(result);
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 module.exports = postRouter;

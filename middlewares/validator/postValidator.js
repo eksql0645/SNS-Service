@@ -1,4 +1,4 @@
-const { body } = require('express-validator');
+const { body, query, param } = require('express-validator');
 const index = require('./index');
 const errorCodes = require('../../utils/errorCodes');
 
@@ -45,6 +45,55 @@ function addPostValidator() {
   ];
 }
 
+function getPostsValidator() {
+  return [
+    query('page')
+      .notEmpty()
+      .bail()
+      .withMessage(errorCodes.required)
+      .isInt({ min: 1 })
+      .withMessage(errorCodes.onlyUseInt),
+    query('limit')
+      .optional()
+      .isIn([10, 30, 50, 70, 100])
+      .withMessage(errorCodes.limitFormat)
+      .isInt()
+      .withMessage(errorCodes.onlyUseInt),
+    query('sort')
+      .optional()
+      .isIn([0, 1, 2])
+      .withMessage(errorCodes.sortFormat)
+      .isInt()
+      .withMessage(errorCodes.onlyUseInt),
+    query('seq')
+      .optional()
+      .isIn([0, 1])
+      .withMessage(errorCodes.sortFormat)
+      .isInt()
+      .withMessage(errorCodes.onlyUseInt),
+    query('search')
+      .optional()
+      .isLength({ max: 20 })
+      .bail()
+      .withMessage(errorCodes.wrongFormat),
+    query('tag')
+      .optional()
+      .isLength({ max: 30 })
+      .bail()
+      .withMessage(errorCodes.wrongFormat),
+    index,
+  ];
+}
+
+function paramValidator() {
+  return [
+    param('id').notEmpty().bail().withMessage(errorCodes.required),
+    index,
+  ];
+}
+
 module.exports = {
   addPostValidator,
+  getPostsValidator,
+  paramValidator,
 };

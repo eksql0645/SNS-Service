@@ -30,4 +30,7 @@ module.exports = {
   tooLongString: '요청 데이터가 제한글자수를 넘었습니다.',
   onlyUseInt: '정수만 입력가능합니다.',
   dateFormat: 'YYYYMMDD로 입력하세요.',
+  sortFormat: 'sort에는 0~2까지만 입력가능합니다.',
+  seqFormat: 'seq에는 0과 1만 입력가능합니다.',
+  limitFormat: 'limit에는 10, 30, 50, 70, 100만 입력가능합니다.',
 };
