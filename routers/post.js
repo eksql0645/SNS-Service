@@ -75,4 +75,16 @@ postRouter.post('/:id/liker', loginRequired, async (req, res, next) => {
   }
 });
 
+postRouter.delete('/:id/liker', loginRequired, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = req.currentUserId;
+    const redis = req.app.get('redis');
+    const result = await postService.unlikePost(id, userId, redis);
+    res.status(201).json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = postRouter;

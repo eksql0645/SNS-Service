@@ -147,7 +147,7 @@ const getPost = async (id, userId, redis) => {
 
   // 해당 게시글에 좋아요한 유저인지 확인: T/F 반환
   if (userId) {
-    const existedLiker = await redis.SISMEMBER(`liker: ${id}`, userId);
+    const existedLiker = await redis.SISMEMBER(`liker: post${id}`, userId);
     post.existedLiker = existedLiker;
   }
 
@@ -161,7 +161,7 @@ const getPost = async (id, userId, redis) => {
  * @param {String} id 게시글 id
  * @param {String} userId 유저 id
  * @param redis redis
- * @returns {Object} 조회된 게시글 객체
+ * @returns {Number} 좋아요 증가 결과
  */
 const likePost = async (id, userId, redis) => {
   // 게시글 확인
@@ -176,17 +176,71 @@ const likePost = async (id, userId, redis) => {
     throw new Error(errorCodes.canNotFindUser);
   }
 
-  // redis에 liker 캐싱: 1 or 0 반환
+  // 캐싱된 liker인지 확인
+  const isLiker = await redis.SISMEMBER(`liker: post${id}`, userId);
+
+  if (isLiker) {
+    throw new Error(errorCodes.isLiker);
+  }
+
+  // redis에 liker 캐싱: [1,1] or [0,0] 반환
   const result = await postModel.createLiker(id, userId, redis);
 
   // 좋아요 수 증가
-  if (result) {
+  if (result[0] === 1 && result[1] === 1) {
     const isIncreased = await postModel.incrementValue(id, { like: 1 });
     if (!isIncreased[0][1]) {
       throw new Error(errorCodes.canNotApplyLike);
     }
+  } else {
+    throw new Error(errorCodes.canNotApplyLike);
   }
   return result;
 };
 
-module.exports = { addPost, getPosts, getPost, likePost };
+/**
+ * 좋아요 취소
+ * @author JKS <eksql0645@gmail.com>
+ * @function unlikePost
+ * @param {String} id 게시글 id
+ * @param {String} userId 유저 id
+ * @param redis redis
+ * @returns {Number} 좋아요 취소 결과
+ */
+const unlikePost = async (id, userId, redis) => {
+  // 게시글 확인
+  const post = await postModel.findPost(id);
+  if (!post) {
+    throw new Error(errorCodes.canNotFindPost);
+  }
+
+  // 유저 확인
+  const user = await userModel.findUserById(userId);
+  if (!user) {
+    throw new Error(errorCodes.canNotFindUser);
+  }
+
+  // 캐싱된 liker인지 확인
+  const isLiker = await redis.SISMEMBER(`liker: post${id}`, userId);
+
+  if (!isLiker) {
+    throw new Error(errorCodes.isNotLiker);
+  }
+
+  // 캐싱된 liker 삭제: [1,1] or [0,0] 반환
+  const result = await postModel.deleteLiker(id, userId, redis);
+
+  // 좋아요 수 감소
+  if (result[0] === 1 && result[1] === 1) {
+    const isDecreased = await postModel.decrementValue(id);
+    console.log(isDecreased);
+    if (!isDecreased[0][1]) {
+      throw new Error(errorCodes.canNotApplyLike);
+    }
+  } else {
+    throw new Error(errorCodes.canNotApplyLike);
+  }
+  return result;
+};
+
+module.exports = { addPost, getPosts, getPost, likePost, unlikePost };
