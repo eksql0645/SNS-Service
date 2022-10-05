@@ -1,5 +1,4 @@
 const { Post, Tag } = require('../db');
-const { Op, Sequelize } = require('sequelize');
 
 const createPost = async (postInfo) => {
   const post = await Post.create(postInfo);
@@ -15,14 +14,14 @@ const findPosts = async (offset, limit, query) => {
         model: Tag,
         attributes: ['id', 'tag'],
         as: 'tag',
-        where: { tag: { [Op.in]: query.tag } },
+        where: query.tagWhere,
         through: {
           attributes: [],
         },
       },
     ],
-    having: Sequelize.literal(`COUNT(DISTINCT tag.tag) = ${query.tag.length}`),
-    group: ['id'],
+    having: query.tagHaving,
+    group: query.tagGroup,
     subQuery: false,
     attributes: [
       'id',
