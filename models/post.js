@@ -47,4 +47,9 @@ const findPost = async (id) => {
   return post;
 };
 
-module.exports = { createPost, findPosts, findPost };
+const incrementPost = async (id) => {
+  const post = await Post.increment({ hits: 1 }, { where: { id } });
+  return post;
+};
+
+module.exports = { createPost, findPosts, findPost, incrementPost };
