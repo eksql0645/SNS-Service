@@ -7,6 +7,7 @@ const {
   addPostValidator,
   getPostsValidator,
   paramValidator,
+  setPostValidator,
 } = require('../middlewares/validator/postValidator');
 const weatherAPI = require('../utils/weather');
 const errorCodes = require('../utils/errorCodes');
@@ -18,7 +19,7 @@ postRouter.post(
   addPostValidator(),
   async (req, res, next) => {
     try {
-      const { title, content, image, password, tag } = req.body;
+      const { title, content, image, tag } = req.body;
       const userId = req.currentUserId;
       const weather = await weatherAPI();
 
@@ -28,7 +29,6 @@ postRouter.post(
         content,
         image,
         weather,
-        password,
         postUserId: userId,
         tag,
       };
@@ -37,7 +37,6 @@ postRouter.post(
       if (!post) {
         throw new Error(errorCodes.canNotCreatePost);
       }
-      post.password = null;
       res.status(201).json(post);
     } catch (err) {
       next(err);
@@ -60,12 +59,27 @@ postRouter.get('/:id', isLogined, paramValidator(), async (req, res, next) => {
     const userId = req.currentUserId;
     const redis = req.app.get('redis');
     const post = await postService.getPost(id, userId, redis);
-    post.password = null;
     res.status(201).json(post);
   } catch (err) {
     next(err);
   }
 });
+
+postRouter.patch(
+  '/:id',
+  loginRequired,
+  setPostValidator(),
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const userId = req.currentUserId;
+      const result = await postService.setPost(id, userId, req.body);
+      res.status(201).json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 postRouter.post(
   '/:id/liker',

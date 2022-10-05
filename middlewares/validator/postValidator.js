@@ -25,18 +25,6 @@ function addPostValidator() {
       .trim()
       .isLength({ max: 30 })
       .withMessage(errorCodes.wrongFormat),
-    body('password')
-      .isLength({ min: 8, max: 16 })
-      .bail()
-      .withMessage(errorCodes.wrongPwdFormat)
-      .matches(/[A-za-z]/)
-      .bail()
-      .withMessage(errorCodes.wrongPwdFormat)
-      .matches(/[~!@#$%^&*()_+|<>?:{}]/)
-      .bail()
-      .withMessage(errorCodes.wrongPwdFormat)
-      .matches(/[0-9]/)
-      .withMessage(errorCodes.wrongPwdFormat),
     body('image')
       .isLength({ max: 55 })
       .bail()
@@ -92,8 +80,40 @@ function paramValidator() {
   ];
 }
 
+function setPostValidator() {
+  return [
+    param('id').notEmpty().bail().withMessage(errorCodes.required),
+    body('title')
+      .optional()
+      .isLength({ max: 60 })
+      .withMessage(errorCodes.tooLongTitle),
+    body('content')
+      .optional()
+      .isLength({ max: 200 })
+      .withMessage(errorCodes.tooLongContent),
+    body('password')
+      .notEmpty()
+      .bail()
+      .withMessage(errorCodes.required)
+      .trim()
+      .isLength({ min: 8, max: 16 })
+      .bail()
+      .withMessage(errorCodes.wrongPwdFormat)
+      .matches(/[A-za-z]/)
+      .bail()
+      .withMessage(errorCodes.wrongPwdFormat)
+      .matches(/[~!@#$%^&*()_+|<>?:{}]/)
+      .bail()
+      .withMessage(errorCodes.wrongPwdFormat)
+      .matches(/[0-9]/)
+      .withMessage(errorCodes.wrongPwdFormat),
+    index,
+  ];
+}
+
 module.exports = {
   addPostValidator,
   getPostsValidator,
   paramValidator,
+  setPostValidator,
 };

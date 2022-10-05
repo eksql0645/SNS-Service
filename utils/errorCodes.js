@@ -16,6 +16,10 @@ module.exports = {
   canNotFindPost: '게시글이 존재하지 않습니다.',
   canNotCreatePost: '게시글이 생성되지 않았습니다.',
   canNotApplyLike: '좋아요 수가 반영되지 않았습니다.',
+  NotMatchedUser: '게시글 작성자가 아닙니다.',
+  failedUpdated: '게시글 수정 중 문제가 생겼습니다. 다시 시도해주세요.',
+  tooLongContent: '내용은 200자까지 작성 가능합니다.',
+  tooLongTitle: '제목은 60자까지 작성 가능합니다.',
   // validator
   required: '필수 값입니다.',
   wrongFormat: '형식을 맞춰주세요.',

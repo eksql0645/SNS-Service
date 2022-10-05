@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt');
 const { postModel, userModel, tagModel, postTagModel } = require('../models');
 const errorCodes = require('../utils/errorCodes');
 const { nanoid } = require('nanoid');
-const getQuery = require('../utils/getQuery');
+const { getQuery, getIncludeClause } = require('../utils/getQuery');
 
 /**
  * 게시글 생성
@@ -24,9 +24,6 @@ const addPost = async (postInfo) => {
   }
   // 회원의 닉네임을 작성자명으로 설정
   postInfo.writer = user.nick;
-
-  // 비밀번호 해쉬화
-  postInfo.password = await bcrypt.hash(postInfo.password, 10);
 
   // 문자열로 된 태그 구분 짓기
   let tagList = postInfo.tag.split(',');
@@ -155,6 +152,41 @@ const getPost = async (id, userId, redis) => {
 };
 
 /**
+ * 게시글 수정
+ * @author JKS <eksql0645@gmail.com>
+ * @function setPost
+ * @param {String} id 게시글 id
+ * @param {String} userId 유저 id
+ * @returns {Array} 수정 결과 [1] or [0] 반환
+ */
+const setPost = async (id, userId, data) => {
+  const { title, content, password } = data;
+
+  // 해당 게시글이 있는지 확인
+  const includeClause = getIncludeClause();
+  let post = await postModel.findPost(id, includeClause);
+  if (!post) {
+    throw new Error(errorCodes.canNotFindPost);
+  }
+
+  // 수정 요청한 유저가 해당 게시글 작성자와 일치하는지 확인
+  if (userId !== post.postUserId) {
+    throw new Error(errorCodes.NotMatchedUser);
+  }
+
+  // 비밀번호가 해당 게시글의 작성자 비밀번호와 일치하는지 확인
+  const hashedPassword = post['User.password'];
+  const isCorrectedPassword = await bcrypt.compare(password, hashedPassword);
+  if (!isCorrectedPassword) {
+    throw new Error(errorCodes.notCorrectPassword);
+  }
+
+  const result = await postModel.updatePost(id, title, content);
+
+  return result;
+};
+
+/**
  * 좋아요 증가
  * @author JKS <eksql0645@gmail.com>
  * @function likePost
@@ -243,4 +275,4 @@ const unlikePost = async (id, userId, redis) => {
   return result;
 };
 
-module.exports = { addPost, getPosts, getPost, likePost, unlikePost };
+module.exports = { addPost, getPosts, getPost, setPost, likePost, unlikePost };

@@ -41,9 +41,18 @@ const findPosts = async (offset, limit, query) => {
   return posts;
 };
 
-const findPost = async (id) => {
-  const post = await Post.findOne({ where: { id }, raw: true });
+const findPost = async (id, includeClause) => {
+  const post = await Post.findOne({
+    include: includeClause,
+    where: { id },
+    raw: true,
+  });
   return post;
+};
+
+const updatePost = async (id, title, content) => {
+  const result = await Post.update({ title, content }, { where: { id } });
+  return result;
 };
 
 const incrementValue = async (id, value) => {
@@ -74,6 +83,7 @@ module.exports = {
   createPost,
   findPosts,
   findPost,
+  updatePost,
   incrementValue,
   decrementValue,
   createLiker,

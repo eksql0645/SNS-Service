@@ -31,11 +31,6 @@ module.exports = class Post extends Sequelize.Model {
           allowNull: true,
           defaultValue: null,
         },
-        password: {
-          type: Sequelize.STRING(70),
-          allowNull: true,
-          defaultValue: null,
-        },
         like: {
           type: Sequelize.INTEGER,
           allowNull: true,

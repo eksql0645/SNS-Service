@@ -1,4 +1,5 @@
 const { Op, Sequelize } = require('sequelize');
+const { User } = require('../db');
 /**
  * 쿼리 생성
  * @author JKS <eksql0645@gmail.com>
@@ -73,4 +74,12 @@ const getQuery = (data) => {
   return query;
 };
 
-module.exports = getQuery;
+const getIncludeClause = () => {
+  const includeClause = [
+    {
+      model: User,
+    },
+  ];
+  return includeClause;
+};
+module.exports = { getQuery, getIncludeClause };
