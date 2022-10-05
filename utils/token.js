@@ -15,9 +15,8 @@ module.exports = {
       expiresIn: '1h',
     });
   },
+  // access token 검증
   accessTokenVerify: (token) => {
-    // access token 검증
-
     const accessDecoded = jwt.verify(token, secret);
     return accessDecoded;
   },
@@ -28,6 +27,7 @@ module.exports = {
       expiresIn: '14d',
     });
   },
+  // refresh token 검증
   refreshTokenVarify: async (redis, token, userId) => {
     const refreshToken = await redis.HGET('refreshToken', userId);
     if (token === refreshToken) {

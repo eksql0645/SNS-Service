@@ -13,6 +13,7 @@ module.exports = {
   // POST
   canNotFindPost: '게시글이 존재하지 않습니다.',
   canNotCreatePost: '게시글이 생성되지 않았습니다.',
+  canNotApplyLike: '좋아요가 반영되지 않았습니다.',
   // validator
   required: '필수 값입니다.',
   wrongFormat: '형식을 맞춰주세요.',

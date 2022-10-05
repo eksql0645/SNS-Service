@@ -43,13 +43,24 @@ const findPosts = async (offset, limit, query) => {
 };
 
 const findPost = async (id) => {
-  const post = await Post.findOne({ where: { id } });
+  const post = await Post.findOne({ where: { id }, raw: true });
   return post;
 };
 
-const incrementPost = async (id) => {
-  const post = await Post.increment({ hits: 1 }, { where: { id } });
+const incrementValue = async (id, value) => {
+  const post = await Post.increment(value, { where: { id } });
   return post;
 };
 
-module.exports = { createPost, findPosts, findPost, incrementPost };
+const createLiker = async (id, userId, redis) => {
+  const result = await redis.SADD(`liker: ${id}`, userId);
+  return result;
+};
+
+module.exports = {
+  createPost,
+  findPosts,
+  findPost,
+  incrementValue,
+  createLiker,
+};

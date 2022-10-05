@@ -1,6 +1,7 @@
 const { Router } = require('express');
 const { nanoid } = require('nanoid');
 const { loginRequired } = require('../middlewares/loginRequired');
+const { isLogined } = require('../middlewares/isLogined');
 const { postService } = require('../services');
 const { addPostValidator } = require('../middlewares/validator/postValidator');
 const weatherAPI = require('../utils/weather');
@@ -49,12 +50,26 @@ postRouter.get('/', async (req, res, next) => {
   }
 });
 
-postRouter.get('/:id', async (req, res, next) => {
+postRouter.get('/:id', isLogined, async (req, res, next) => {
   try {
     const { id } = req.params;
-    const post = await postService.getPost(id);
+    const userId = req.currentUserId;
+    const redis = req.app.get('redis');
+    const post = await postService.getPost(id, userId, redis);
     post.password = null;
     res.status(201).json(post);
+  } catch (err) {
+    next(err);
+  }
+});
+
+postRouter.post('/:id/liker', loginRequired, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = req.currentUserId;
+    const redis = req.app.get('redis');
+    const result = await postService.likePost(id, userId, redis);
+    res.status(201).json(result);
   } catch (err) {
     next(err);
   }

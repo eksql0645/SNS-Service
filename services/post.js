@@ -128,21 +128,65 @@ const getPosts = async (data) => {
  * @author JKS <eksql0645@gmail.com>
  * @function getPost
  * @param {String} id 게시글 id
+ * @param {String} userId 유저 id
+ * @param redis redis
  * @returns {Object} 조회된 게시글 객체
  */
-const getPost = async (id) => {
+const getPost = async (id, userId, redis) => {
   // 조회수 증가
-  const result = await postModel.incrementPost(id);
+  const result = await postModel.incrementValue(id, { hits: 1 });
   if (!result[0][1]) {
     throw new Error(errorCodes.canNotFindPost);
   }
 
-  // 게시글 조회
+  // 조회
+  let post = await postModel.findPost(id);
+  if (!post) {
+    throw new Error(errorCodes.canNotFindPost);
+  }
+
+  // 해당 게시글에 좋아요한 유저인지 확인: T/F 반환
+  if (userId) {
+    const existedLiker = await redis.SISMEMBER(`liker: ${id}`, userId);
+    post.existedLiker = existedLiker;
+  }
+
+  return post;
+};
+
+/**
+ * 좋아요 증가
+ * @author JKS <eksql0645@gmail.com>
+ * @function likePost
+ * @param {String} id 게시글 id
+ * @param {String} userId 유저 id
+ * @param redis redis
+ * @returns {Object} 조회된 게시글 객체
+ */
+const likePost = async (id, userId, redis) => {
+  // 게시글 확인
   const post = await postModel.findPost(id);
   if (!post) {
     throw new Error(errorCodes.canNotFindPost);
   }
-  return post;
+
+  // 유저 확인
+  const user = await userModel.findUserById(userId);
+  if (!user) {
+    throw new Error(errorCodes.canNotFindUser);
+  }
+
+  // redis에 liker 캐싱: 1 or 0 반환
+  const result = await postModel.createLiker(id, userId, redis);
+
+  // 좋아요 수 증가
+  if (result) {
+    const isIncreased = await postModel.incrementValue(id, { like: 1 });
+    if (!isIncreased[0][1]) {
+      throw new Error(errorCodes.canNotApplyLike);
+    }
+  }
+  return result;
 };
 
-module.exports = { addPost, getPosts, getPost };
+module.exports = { addPost, getPosts, getPost, likePost };
