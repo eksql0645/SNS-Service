@@ -41,18 +41,28 @@ const findPosts = async (offset, limit, query) => {
   return posts;
 };
 
-const findPost = async (id, includeClause) => {
+const findPost = async (id) => {
   const post = await Post.findOne({
-    include: includeClause,
     where: { id },
-    raw: true,
   });
+
   return post;
 };
 
 const updatePost = async (id, title, content) => {
   const result = await Post.update({ title, content }, { where: { id } });
   return result;
+};
+
+const destroyPost = async (id) => {
+  const result = await Post.destroy({ where: { id } });
+  return result;
+};
+
+const getWriter = async (post) => {
+  const writer = await post.getUser({ raw: true });
+
+  return writer;
 };
 
 const incrementValue = async (id, value) => {
@@ -84,6 +94,8 @@ module.exports = {
   findPosts,
   findPost,
   updatePost,
+  destroyPost,
+  getWriter,
   incrementValue,
   decrementValue,
   createLiker,

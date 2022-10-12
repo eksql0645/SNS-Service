@@ -74,12 +74,4 @@ const getQuery = (data) => {
   return query;
 };
 
-const getIncludeClause = () => {
-  const includeClause = [
-    {
-      model: User,
-    },
-  ];
-  return includeClause;
-};
-module.exports = { getQuery, getIncludeClause };
+module.exports = { getQuery };

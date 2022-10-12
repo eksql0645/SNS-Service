@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt');
 const { postModel, userModel, tagModel, postTagModel } = require('../models');
 const errorCodes = require('../utils/errorCodes');
 const { nanoid } = require('nanoid');
-const { getQuery, getIncludeClause } = require('../utils/getQuery');
+const { getQuery } = require('../utils/getQuery');
 
 /**
  * 게시글 생성
@@ -163,11 +163,14 @@ const setPost = async (id, userId, data) => {
   const { title, content, password } = data;
 
   // 해당 게시글이 있는지 확인
-  const includeClause = getIncludeClause();
-  let post = await postModel.findPost(id, includeClause);
+  const post = await postModel.findPost(id);
+
   if (!post) {
     throw new Error(errorCodes.canNotFindPost);
   }
+
+  // 작성자 정보 가져오기
+  const writer = await postModel.getWriter(post);
 
   // 수정 요청한 유저가 해당 게시글 작성자와 일치하는지 확인
   if (userId !== post.postUserId) {
@@ -175,13 +178,66 @@ const setPost = async (id, userId, data) => {
   }
 
   // 비밀번호가 해당 게시글의 작성자 비밀번호와 일치하는지 확인
-  const hashedPassword = post['User.password'];
+  const hashedPassword = writer.id;
   const isCorrectedPassword = await bcrypt.compare(password, hashedPassword);
   if (!isCorrectedPassword) {
     throw new Error(errorCodes.notCorrectPassword);
   }
 
   const result = await postModel.updatePost(id, title, content);
+
+  return result;
+};
+
+/**
+ * 게시글 삭제
+ * @author JKS <eksql0645@gmail.com>
+ * @function deletePost
+ * @param {String} id 게시글 id
+ * @param {String} userId 유저 id
+ * @param {String} password 비밀번호
+ * @param redis 레디스
+ * @returns {Object} 삭제 확인 메세지
+ */
+const deletePost = async (deleteInfo) => {
+  const { id, userId, password, redis } = deleteInfo;
+
+  // 해당 게시글이 있는지 확인
+  const post = await postModel.findPost(id);
+
+  if (!post) {
+    throw new Error(errorCodes.canNotFindPost);
+  }
+
+  // 작성자 정보 가져오기
+  const writer = await postModel.getWriter(post);
+
+  // 삭제 요청한 유저가 해당 게시글 작성자와 일치하는지 확인
+  if (userId !== post.postUserId) {
+    throw new Error(errorCodes.NotMatchedUser);
+  }
+
+  // // 비밀번호가 작성자 비밀번호와 일치하는지 확인
+  const hashedPassword = writer.password;
+  const isCorrectedPassword = await bcrypt.compare(password, hashedPassword);
+  if (!isCorrectedPassword) {
+    throw new Error(errorCodes.notCorrectPassword);
+  }
+
+  // DB 상에서 soft delete
+  const isdeleted = await postModel.destroyPost(id);
+
+  if (!isdeleted) {
+    throw new Error(errorCodes.serverError);
+  }
+
+  // 삭제할 게시글 레디스에 저장
+  await redis.json.set(`deletedPost: ${post.id}`, '$', post.dataValues);
+
+  // 30일 경과하면 삭제
+  await redis.expire(`deletedPost: ${post.id}`, 1296000);
+
+  const result = { message: '탈퇴되었습니다.' };
 
   return result;
 };
@@ -275,4 +331,12 @@ const unlikePost = async (id, userId, redis) => {
   return result;
 };
 
-module.exports = { addPost, getPosts, getPost, setPost, likePost, unlikePost };
+module.exports = {
+  addPost,
+  getPosts,
+  getPost,
+  setPost,
+  deletePost,
+  likePost,
+  unlikePost,
+};

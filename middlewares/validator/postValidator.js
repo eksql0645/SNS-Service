@@ -111,9 +111,33 @@ function setPostValidator() {
   ];
 }
 
+function deletePostValidator() {
+  return [
+    param('id').notEmpty().bail().withMessage(errorCodes.required),
+    body('password')
+      .notEmpty()
+      .bail()
+      .withMessage(errorCodes.required)
+      .trim()
+      .isLength({ min: 8, max: 16 })
+      .bail()
+      .withMessage(errorCodes.wrongPwdFormat)
+      .matches(/[A-za-z]/)
+      .bail()
+      .withMessage(errorCodes.wrongPwdFormat)
+      .matches(/[~!@#$%^&*()_+|<>?:{}]/)
+      .bail()
+      .withMessage(errorCodes.wrongPwdFormat)
+      .matches(/[0-9]/)
+      .withMessage(errorCodes.wrongPwdFormat),
+    index,
+  ];
+}
+
 module.exports = {
   addPostValidator,
   getPostsValidator,
   paramValidator,
   setPostValidator,
+  deletePostValidator,
 };
