@@ -17,6 +17,7 @@
   },
   "ignorePatterns": ["node_modules/"],
   "rules": {
+    "no-undef": "warn",
     "no-var": "warn",
     "prettier/prettier": [
       "error",

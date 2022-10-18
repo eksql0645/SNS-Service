@@ -10,6 +10,16 @@ module.exports = {
   alreadySignUpEmail: '이미 가입된 이메일입니다.',
   notCorrectPassword: '비밀번호가 일치하지 않습니다.',
   failedSignUp: '회원가입 중 문제가 생겼습니다. 다시 시도해주세요.',
+  isNotLiker: '좋아요를 눌러야 취소가 가능합니다.',
+  isLiker: '이미 해당 게시글에 좋아요를 눌렀습니다.',
+  // POST
+  canNotFindPost: '게시글이 존재하지 않습니다.',
+  canNotCreatePost: '게시글이 생성되지 않았습니다.',
+  canNotApplyLike: '좋아요 수가 반영되지 않았습니다.',
+  NotMatchedUser: '게시글 작성자가 아닙니다.',
+  failedUpdated: '게시글 수정 중 문제가 생겼습니다. 다시 시도해주세요.',
+  tooLongContent: '내용은 200자까지 작성 가능합니다.',
+  tooLongTitle: '제목은 60자까지 작성 가능합니다.',
   // validator
   required: '필수 값입니다.',
   wrongFormat: '형식을 맞춰주세요.',
@@ -24,4 +34,7 @@ module.exports = {
   tooLongString: '요청 데이터가 제한글자수를 넘었습니다.',
   onlyUseInt: '정수만 입력가능합니다.',
   dateFormat: 'YYYYMMDD로 입력하세요.',
+  sortFormat: 'sort에는 0~2까지만 입력가능합니다.',
+  seqFormat: 'seq에는 0과 1만 입력가능합니다.',
+  limitFormat: 'limit에는 10, 30, 50, 70, 100만 입력가능합니다.',
 };

@@ -15,14 +15,10 @@ module.exports = {
       expiresIn: '1h',
     });
   },
+  // access token 검증
   accessTokenVerify: (token) => {
-    // access token 검증
-    try {
-      const accessDecoded = jwt.verify(token, secret);
-      return accessDecoded;
-    } catch (err) {
-      return err;
-    }
+    const accessDecoded = jwt.verify(token, secret);
+    return accessDecoded;
   },
   // refresh token 발급
   refreshToken: () => {
@@ -31,21 +27,14 @@ module.exports = {
       expiresIn: '14d',
     });
   },
+  // refresh token 검증
   refreshTokenVarify: async (redis, token, userId) => {
-    try {
-      const refreshToken = await redis.HGET('refreshToken', userId);
-      if (token === refreshToken) {
-        try {
-          const refreshDecoded = jwt.verify(token, secret);
-          return refreshDecoded;
-        } catch (err) {
-          return err;
-        }
-      } else {
-        throw new Error(errorCodes.notMatchToken);
-      }
-    } catch (err) {
-      return err;
+    const refreshToken = await redis.HGET('refreshToken', userId);
+    if (token === refreshToken) {
+      const refreshDecoded = jwt.verify(token, secret);
+      return refreshDecoded;
+    } else {
+      throw new Error(errorCodes.notMatchToken);
     }
   },
 };

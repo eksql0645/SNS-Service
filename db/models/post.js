@@ -31,6 +31,20 @@ module.exports = class Post extends Sequelize.Model {
           allowNull: true,
           defaultValue: null,
         },
+        like: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          defaultValue: 0,
+        },
+        hits: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          defaultValue: 0,
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+        },
       },
       {
         sequelize,
@@ -46,7 +60,7 @@ module.exports = class Post extends Sequelize.Model {
   }
   static associate(db) {
     db.Post.belongsTo(db.User, {
-      foreignKey: 'post_userId',
+      foreignKey: 'postUserId',
       targetKey: 'id',
     });
     db.Post.hasMany(db.Comment, {
@@ -54,9 +68,10 @@ module.exports = class Post extends Sequelize.Model {
       sourceKey: 'id',
     });
     db.Post.belongsToMany(db.Tag, {
+      as: 'tag',
       through: 'PostTag',
       targetKey: 'id',
-      foreignKey: 'post_id',
+      foreignKey: 'postId',
     });
   }
 };

@@ -1,4 +1,4 @@
-const userModel = require('../models/user');
+const { userModel } = require('../models');
 const errorCodes = require('../utils/errorCodes');
 const bcrypt = require('bcrypt');
 const { nanoid } = require('nanoid');
@@ -162,17 +162,17 @@ const deleteUser = async (userId, redis, currentPassword) => {
     throw new Error(errorCodes.notCorrectPassword);
   }
 
-  // 삭제 유저 레디스에 저장
-  await redis.json.set(`deletedUser: ${user.id}`, '$', user.dataValues);
-
-  // 30일 경과하면 삭제
-  await redis.expire(`deletedUser: ${user.id}`, 1296000);
-
   const isdeleted = await userModel.destroyUser(userId);
 
   if (!isdeleted) {
     throw new Error(errorCodes.serverError);
   }
+
+  // 삭제 유저 레디스에 저장
+  await redis.json.set(`deletedUser: ${user.id}`, '$', user.dataValues);
+
+  // 30일 경과하면 삭제
+  await redis.expire(`deletedUser: ${user.id}`, 1296000);
 
   const result = { message: '탈퇴되었습니다.' };
 
