@@ -1,7 +1,7 @@
 const errorCodes = require('../utils/errorCodes');
 const {
   accessToken,
-  refreshTokenVarify,
+  refreshTokenVerify,
   accessTokenVerify,
 } = require('../utils/token');
 const checkExpiredTime = require('../utils/expiredTime');
@@ -21,7 +21,7 @@ async function checkExpiredToken(userToken, refreshToken, redis) {
   const accessGap = checkExpiredTime(accessTokenResult);
   const accessExpiredTime = 60;
 
-  const refreshTokenresult = await refreshTokenVarify(
+  const refreshTokenresult = await refreshTokenVerify(
     redis,
     refreshToken,
     accessTokenResult.userId
