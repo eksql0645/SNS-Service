@@ -15,20 +15,20 @@ const createToken = require('../utils/token');
  * @returns {Object} 생성된 user 객체에서 비밀번호를 제외한 정보
  */
 const addUser = async (userInfo) => {
-  const { email, password } = userInfo;
+  const { password } = userInfo;
 
-  // 이메일로 중복 회원 확인
-  let user = await userModel.findUserByEmail(email);
-  if (user) {
-    throw new Error(errorCodes.alreadySignUpEmail);
-  }
+  // // 이메일로 중복 회원 확인
+  // let user = await userModel.findUserByEmail(email);
+  // if (user) {
+  //   throw new Error(errorCodes.alreadySignUpEmail);
+  // }
 
   // 비밀번호 해쉬화
   const hashedPassword = await bcrypt.hash(password, 10);
   userInfo.password = hashedPassword;
   userInfo.id = nanoid();
 
-  user = await userModel.createUser(userInfo);
+  const user = await userModel.createUser(userInfo);
 
   user.password = null;
 
