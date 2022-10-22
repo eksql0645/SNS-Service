@@ -12,8 +12,9 @@ const { loginRequired } = require('../middlewares/loginRequired');
 userRouter.post('/signup', signupValidator(), async (req, res, next) => {
   try {
     const { email, password, nick } = req.body;
+    const redis = req.app.get('redis');
     const userInfo = { email, password, nick };
-    const user = await userService.addUser(userInfo);
+    const user = await userService.addUser(redis, userInfo);
     res.status(201).json(user);
   } catch (err) {
     next(err);

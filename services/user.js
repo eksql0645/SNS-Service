@@ -14,14 +14,14 @@ const createToken = require('../utils/token');
  * @param {String} userInfo.nick 닉네임
  * @returns {Object} 생성된 user 객체에서 비밀번호를 제외한 정보
  */
-const addUser = async (userInfo) => {
-  const { password } = userInfo;
+const addUser = async (redis, userInfo) => {
+  const { email, password } = userInfo;
 
-  // // 이메일로 중복 회원 확인
-  // let user = await userModel.findUserByEmail(email);
-  // if (user) {
-  //   throw new Error(errorCodes.alreadySignUpEmail);
-  // }
+  let isAuthCompleted = await redis.HGET('authComplete', email);
+
+  if (!isAuthCompleted) {
+    throw new Error(errorCodes.unAuthUser);
+  }
 
   // 비밀번호 해쉬화
   const hashedPassword = await bcrypt.hash(password, 10);

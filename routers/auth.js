@@ -17,15 +17,17 @@ authRouter.post('/mail', async (req, res, next) => {
 });
 
 // 인증
-// authRouter.post('/', async (req, res, next) => {
-//   try {
-//     const redis = req.app.get('redis');
+authRouter.post('/:email', async (req, res, next) => {
+  try {
+    const redis = req.app.get('redis');
+    const { authNumber } = req.body;
+    const { email } = req.params;
 
-//     const authTime = await redis.get(`authNumber: ${userId}`);
+    const result = await authService.checkAuthNumber(redis, email, authNumber);
 
-//     res.status(201).json(result);
-//   } catch (err) {
-//     next(err);
-//   }
-// });
+    res.status(201).json(result);
+  } catch (err) {
+    next(err);
+  }
+});
 module.exports = authRouter;
