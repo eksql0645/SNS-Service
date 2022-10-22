@@ -1,4 +1,5 @@
 const { Router } = require('express');
+const { isLogined } = require('../middlewares/isLogined');
 const { authService } = require('../services');
 const authRouter = Router();
 
@@ -17,13 +18,14 @@ authRouter.post('/mail', async (req, res, next) => {
 });
 
 // 인증
-authRouter.post('/:email', async (req, res, next) => {
+authRouter.post('/:email', isLogined, async (req, res, next) => {
   try {
     const redis = req.app.get('redis');
     const { authNumber } = req.body;
     const { email } = req.params;
-
-    const result = await authService.checkAuthNumber(redis, email, authNumber);
+    const userId = req.currentUserId;
+    const authInfo = { userId, redis, email, authNumber };
+    const result = await authService.checkAuthNumber(authInfo);
 
     res.status(201).json(result);
   } catch (err) {

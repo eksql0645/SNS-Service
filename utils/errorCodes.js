@@ -16,7 +16,7 @@ module.exports = {
   failedSendEmail: '이메일 전송에 실패했습니다.',
   failedSaveAuthNumber: '발급된 authNumber가 저장되지 않았습니다.',
   notGetReadyMailServer: '메일 서버가 준비되지 않았습니다.',
-  timeOver: '시간초과로 인해 인증번호 재발급이 필요합니다.',
+  reissuedAuth: '인증번호 재발급이 필요합니다.',
   failedAuth: '인증번호가 일치하지 않습니다.',
   failedSaveAuthStatus: '인증상태가 저장되지 않았습니다.',
   unAuthUser: '인증되지 않은 회원입니다.',

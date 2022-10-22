@@ -75,26 +75,17 @@ function loginValidator() {
 
 function setUserValidator() {
   return [
-    body('nick').isLength({ max: 15 }).withMessage(errorCodes.wrongFormat),
+    body('nick')
+      .optional()
+      .isLength({ max: 15 })
+      .withMessage(errorCodes.wrongFormat),
     body('email')
+      .optional()
       .isEmail()
       .bail()
       .withMessage(errorCodes.wrongEmailFormat)
       .isLength({ max: 25 })
       .withMessage(errorCodes.wrongFormat),
-    body('password')
-      .notEmpty()
-      .isLength({ min: 8, max: 16 })
-      .bail()
-      .withMessage(errorCodes.wrongPwdFormat)
-      .matches(/[A-za-z]/)
-      .bail()
-      .withMessage(errorCodes.wrongPwdFormat)
-      .matches(/[~!@#$%^&*()_+|<>?:{}]/)
-      .bail()
-      .withMessage(errorCodes.wrongPwdFormat)
-      .matches(/[0-9]/)
-      .withMessage(errorCodes.wrongPwdFormat),
     body('currentPassword')
       .notEmpty()
       .bail()

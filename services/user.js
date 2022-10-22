@@ -17,6 +17,12 @@ const createToken = require('../utils/token');
 const addUser = async (redis, userInfo) => {
   const { email, password } = userInfo;
 
+  // 이메일로 중복 회원 확인
+  let user = await userModel.findUserByEmail(email);
+  if (user) {
+    throw new Error(errorCodes.alreadySignUpEmail);
+  }
+
   let isAuthCompleted = await redis.HGET('authComplete', email);
 
   if (!isAuthCompleted) {
@@ -28,7 +34,7 @@ const addUser = async (redis, userInfo) => {
   userInfo.password = hashedPassword;
   userInfo.id = nanoid();
 
-  const user = await userModel.createUser(userInfo);
+  user = await userModel.createUser(userInfo);
 
   user.password = null;
 
@@ -104,8 +110,8 @@ const getUser = async (userId) => {
  * @param {String} userId user id
  * @returns {Object} 수정된 user 객체
  */
-const setUser = async (updateInfo) => {
-  const { currentPassword, password, userId } = updateInfo;
+const setUser = async (redis, updateInfo) => {
+  const { email, currentPassword, password, userId } = updateInfo;
 
   // 회원 확인
   let user = await userModel.findUserById(userId);
@@ -113,9 +119,25 @@ const setUser = async (updateInfo) => {
     throw new Error(errorCodes.canNotFindUser);
   }
 
+  // 이메일을 변경한다면 인증된 상태인지 확인
+  if (email) {
+    // 새 이메일 중복 확인
+    let user = await userModel.findUserByEmail(email);
+    if (user) {
+      throw new Error(errorCodes.alreadySignUpEmail);
+    }
+
+    let isAuthCompleted = await redis.HGET('authComplete', email);
+
+    if (!isAuthCompleted) {
+      throw new Error(errorCodes.unAuthUser);
+    }
+  }
+
   // 현재 비밀번호 일치 확인
   const hashedPassword = user.password;
   const isMatched = await bcrypt.compare(currentPassword, hashedPassword);
+
   if (!isMatched) {
     throw new Error(errorCodes.notCorrectPassword);
   }

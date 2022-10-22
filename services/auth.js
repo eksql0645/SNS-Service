@@ -36,13 +36,15 @@ const sendAuthMail = async (redis, email) => {
   return result;
 };
 
-const checkAuthNumber = async (redis, email, authNumber) => {
+const checkAuthNumber = async (authInfo) => {
+  const { userId, redis, email, authNumber } = authInfo;
+
   // 인증번호 가져오기
   const existedAuthNumber = await redis.get(`authNumber: ${email}`);
 
-  // 저장된 인증번호가 없다면 시간 초과되어 삭제된 것.
+  // 저장된 인증번호가 없다면 재발급 필요
   if (!existedAuthNumber) {
-    throw new Error(errorCodes.timeOver);
+    throw new Error(errorCodes.reissuedAuth);
   }
 
   // 인증번호가 있다면 일치 여부 확인
@@ -61,6 +63,13 @@ const checkAuthNumber = async (redis, email, authNumber) => {
 
   // Redis에 저장된 인증번호 삭제
   await redis.del(`authNumber: ${email}`);
+
+  // 로그인 상태에서 인증요청을 보낸 것은 이메일을 변경하는 경우이다. 이 경우 기존 이메일 상태 데이터를 삭제한다.
+  if (userId) {
+    const user = await userModel.findUserById(userId);
+    const preEmail = user.email;
+    await redis.HDEL('authComplete', preEmail);
+  }
 
   return result;
 };

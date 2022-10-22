@@ -52,8 +52,9 @@ userRouter.patch(
     try {
       const { email, nick, password, currentPassword } = req.body;
       const userId = req.currentUserId;
+      const redis = req.app.get('redis');
       const updateInfo = { email, nick, password, currentPassword, userId };
-      const user = await userService.setUser(updateInfo);
+      const user = await userService.setUser(redis, updateInfo);
       res.status(201).json(user);
     } catch (err) {
       next(err);
