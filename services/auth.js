@@ -37,7 +37,7 @@ const sendAuthMail = async (redis, email) => {
 };
 
 const checkAuthNumber = async (authInfo) => {
-  const { userId, redis, email, authNumber } = authInfo;
+  const { redis, email, authNumber } = authInfo;
 
   // 인증번호 가져오기
   const existedAuthNumber = await redis.get(`authNumber: ${email}`);
@@ -52,26 +52,16 @@ const checkAuthNumber = async (authInfo) => {
     throw new Error(errorCodes.failedAuth);
   }
 
-  // 해당 이메일과 인증완료 상태 저장 (인증완료: 1)
-  await redis.HSET('authComplete', email, 1);
+  // 해당 이메일과 인증완료 상태 임시 저장 (인증완료: 1)
+  await redis.set(`authNumber: ${email}`, authNumber);
 
-  const result = await redis.HGET('authComplete', email);
-
-  if (!result) {
-    throw new Error(errorCodes.failedSaveAuthStatus);
-  }
+  // 10분 캐싱
+  await redis.expire(`authNumber: ${email}`, 600);
 
   // Redis에 저장된 인증번호 삭제
   await redis.del(`authNumber: ${email}`);
 
-  // 로그인 상태에서 인증요청을 보낸 것은 이메일을 변경하는 경우이다. 이 경우 기존 이메일 상태 데이터를 삭제한다.
-  if (userId) {
-    const user = await userModel.findUserById(userId);
-    const preEmail = user.email;
-    await redis.HDEL('authComplete', preEmail);
-  }
-
-  return result;
+  return { message: '인증되었습니다.' };
 };
 
 module.exports = { sendAuthMail, checkAuthNumber };

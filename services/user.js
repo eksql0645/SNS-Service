@@ -30,8 +30,8 @@ const addUser = async (redis, userInfo) => {
     throw new Error(errorCodes.alreadySignUpEmail);
   }
 
-  let isAuthCompleted = await redis.HGET('authComplete', email);
-
+  // 임시 인증 완료 상태 확인
+  const isAuthCompleted = await redis.get(`authNumber: ${email}`);
   if (!isAuthCompleted) {
     throw new Error(errorCodes.unAuthUser);
   }
@@ -40,6 +40,16 @@ const addUser = async (redis, userInfo) => {
   const hashedPassword = await bcrypt.hash(password, 10);
   userInfo.password = hashedPassword;
   userInfo.id = nanoid();
+
+  // 인증 완료 상태 저장
+  await redis.HSET('authComplete', email, 1);
+  const result = await redis.HGET('authComplete', email);
+  if (!result) {
+    throw new Error(errorCodes.failedSaveAuthStatus);
+  }
+
+  // 임시 데이터 삭제
+  await redis.del(`authNumber: ${email}`);
 
   user = await userModel.createUser(userInfo);
 
@@ -126,6 +136,9 @@ const setUser = async (redis, updateInfo) => {
     throw new Error(errorCodes.canNotFindUser);
   }
 
+  // 기존 이메일
+  const preEmail = user.email;
+
   // 이메일을 변경한다면 인증된 상태인지 확인
   if (email) {
     // 새 이메일 중복 확인
@@ -134,11 +147,24 @@ const setUser = async (redis, updateInfo) => {
       throw new Error(errorCodes.alreadySignUpEmail);
     }
 
-    let isAuthCompleted = await redis.HGET('authComplete', email);
-
+    // 임시 인증 완료 상태 확인
+    const isAuthCompleted = await redis.get(`authNumber: ${email}`);
     if (!isAuthCompleted) {
       throw new Error(errorCodes.unAuthUser);
     }
+
+    // 기존 이메일 상태 데이터 삭제
+    await redis.HDEL('authComplete', preEmail);
+
+    // 새 이메일 인증 완료 상태 저장
+    await redis.HSET('authComplete', email, 1);
+    const result = await redis.HGET('authComplete', email);
+    if (!result) {
+      throw new Error(errorCodes.failedSaveAuthStatus);
+    }
+
+    // 임시 데이터 삭제
+    await redis.del(`authNumber: ${email}`);
   }
 
   // 현재 비밀번호 일치 확인
