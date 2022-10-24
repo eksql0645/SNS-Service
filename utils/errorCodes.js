@@ -7,6 +7,10 @@ module.exports = {
   serverError: '서버 에러가 발생하였습니다. 잠시 후 시도하여 주세요.',
   // USER
   canNotFindUser: '존재하지 않는 회원입니다.',
+  canNotFindDeletedUser:
+    '입력한 계정이 올바르지 않거나, 이미 유예기간이 지나 복구가 불가능한 계정입니다.',
+  FindDeletedUser:
+    '탈퇴한지 30일이 지나지 않은 계정입니다. 계정을 복구해주세요.',
   alreadySignUpEmail: '이미 가입된 이메일입니다.',
   notCorrectPassword: '비밀번호가 일치하지 않습니다.',
   failedSignUp: '회원가입 중 문제가 생겼습니다. 다시 시도해주세요.',

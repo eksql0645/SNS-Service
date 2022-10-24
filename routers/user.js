@@ -9,6 +9,7 @@ const {
 } = require('../middlewares/validator/userValidator');
 const { loginRequired } = require('../middlewares/loginRequired');
 
+// 회원가입
 userRouter.post('/signup', signupValidator(), async (req, res, next) => {
   try {
     const { email, password, nick } = req.body;
@@ -21,6 +22,7 @@ userRouter.post('/signup', signupValidator(), async (req, res, next) => {
   }
 });
 
+// 로그인
 userRouter.post('/login', loginValidator(), async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -34,16 +36,18 @@ userRouter.post('/login', loginValidator(), async (req, res, next) => {
   }
 });
 
+// 회원조회
 userRouter.get('/', loginRequired, async (req, res, next) => {
   try {
     const userId = req.currentUserId;
     const user = await userService.getUser(userId);
-    res.status(201).json(user);
+    res.status(200).json(user);
   } catch (err) {
     next(err);
   }
 });
 
+// 회원수정
 userRouter.patch(
   '/',
   loginRequired,
@@ -55,7 +59,29 @@ userRouter.patch(
       const redis = req.app.get('redis');
       const updateInfo = { email, nick, password, currentPassword, userId };
       const user = await userService.setUser(redis, updateInfo);
-      res.status(201).json(user);
+      res.status(200).json(user);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// 회원탈퇴
+userRouter.delete(
+  '/',
+  loginRequired,
+  deleteUserValidator(),
+  async (req, res, next) => {
+    try {
+      const { currentPassword } = req.body;
+      const redis = req.app.get('redis');
+      const userId = req.currentUserId;
+      const result = await userService.deleteUser(
+        userId,
+        redis,
+        currentPassword
+      );
+      res.status(200).json(result);
     } catch (err) {
       next(err);
     }
@@ -74,25 +100,30 @@ userRouter.post('/:email/temp-password', async (req, res, next) => {
   }
 });
 
-userRouter.delete(
-  '/',
-  loginRequired,
-  deleteUserValidator(),
-  async (req, res, next) => {
-    try {
-      const { currentPassword } = req.body;
-      const redis = req.app.get('redis');
-      const userId = req.currentUserId;
-      const result = await userService.deleteUser(
-        userId,
-        redis,
-        currentPassword
-      );
-      res.status(201).json(result);
-    } catch (err) {
-      next(err);
-    }
-  }
-);
+// 탈퇴 회원 확인
+userRouter.get('/deleted-user', async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const redis = req.app.get('redis');
 
+    const result = await userService.checkDeletedUser(redis, email);
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 회원 복구
+userRouter.post('/deleted-user/:email', async (req, res, next) => {
+  try {
+    const { email } = req.params;
+    const { password } = req.body;
+    const redis = req.app.get('redis');
+
+    const restoredUser = await userService.reCreateUser(redis, email, password);
+    res.status(201).json(restoredUser);
+  } catch (err) {
+    next(err);
+  }
+});
 module.exports = userRouter;

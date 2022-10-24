@@ -18,6 +18,12 @@ const nodemailer = require('../utils/nodemailer');
 const addUser = async (redis, userInfo) => {
   const { email, password } = userInfo;
 
+  // 기존에 가입한 이력이 있는지 확인
+  const deletedUser = await redis.json.get(`deletedUser: ${email}`);
+  if (deletedUser) {
+    throw new Error(errorCodes.FindDeletedUser);
+  }
+
   // 이메일로 중복 회원 확인
   let user = await userModel.findUserByEmail(email);
   if (user) {
@@ -164,12 +170,12 @@ const setUser = async (redis, updateInfo) => {
 };
 
 /**
- * 회원 삭제
+ * 회원 탈퇴
  * @author JKS <eksql0645@gmail.com>
  * @function deleteUser
  * @param {String} userId user id
  * @param {String} currentPassword 현재 password
- * @returns {Object} 삭제 확인 메세지
+ * @returns {Object} 탈퇴 확인 메세지
  */
 const deleteUser = async (userId, redis, currentPassword) => {
   // 회원 확인
@@ -192,16 +198,17 @@ const deleteUser = async (userId, redis, currentPassword) => {
   }
 
   // 삭제 유저 레디스에 저장
-  await redis.json.set(`deletedUser: ${user.id}`, '$', user.dataValues);
+  await redis.json.set(`deletedUser: ${user.email}`, '$', user.dataValues);
 
   // 30일 경과하면 삭제
-  await redis.expire(`deletedUser: ${user.id}`, 1296000);
+  await redis.expire(`deletedUser: ${user.email}`, 1296000);
 
   const result = { message: '탈퇴되었습니다.' };
 
   return result;
 };
 
+// 임시 비밀번호 전송
 const sendTempPasswordMail = async (email) => {
   // 이메일 확인
   let user = await userModel.findUserByEmail(email);
@@ -239,6 +246,37 @@ const sendTempPasswordMail = async (email) => {
 
   return result;
 };
+
+// 탈퇴 회원 확인
+const checkDeletedUser = async (redis, email) => {
+  const deletedUser = await redis.json.get(`deletedUser: ${email}`);
+  if (!deletedUser) {
+    throw new Error(errorCodes.canNotFindDeletedUser);
+  }
+  return { message: `${deletedUser.email}은 복구 가능한 계정입니다.` };
+};
+
+const reCreateUser = async (redis, email, password) => {
+  // 탈퇴 회원 데이터 가져오기
+  const deletedUser = await redis.json.get(`deletedUser: ${email}`);
+  if (!deletedUser) {
+    throw new Error(errorCodes.canNotFindDeletedUser);
+  }
+
+  // 비밀번호 일치 확인
+  const isMatched = await bcrypt.compare(password, deletedUser.password);
+  if (!isMatched) {
+    throw new Error(errorCodes.notCorrectPassword);
+  }
+
+  // 기존 데이터 다시 생성
+  const restoredUser = await userModel.createUser(deletedUser);
+
+  restoredUser.password = null;
+
+  return restoredUser;
+};
+
 module.exports = {
   addUser,
   getToken,
@@ -246,4 +284,6 @@ module.exports = {
   setUser,
   deleteUser,
   sendTempPasswordMail,
+  checkDeletedUser,
+  reCreateUser,
 };
