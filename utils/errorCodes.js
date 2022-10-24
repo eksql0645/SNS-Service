@@ -32,6 +32,8 @@ module.exports = {
   failedUpdated: '게시글 수정 중 문제가 생겼습니다. 다시 시도해주세요.',
   tooLongContent: '내용은 200자까지 작성 가능합니다.',
   tooLongTitle: '제목은 60자까지 작성 가능합니다.',
+  notDuplicated: '중복된 내용의 태그는 하나만 적용 가능합니다.',
+
   // validator
   required: '필수 값입니다.',
   wrongFormat: '형식을 맞춰주세요.',

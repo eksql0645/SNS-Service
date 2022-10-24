@@ -1,4 +1,4 @@
-const { User } = require('../db');
+const { User, Post, Tag, PostTag } = require('../db');
 
 const findUserByEmail = async (email) => {
   const user = await User.findOne({ where: { email } });
@@ -25,7 +25,10 @@ const updateUser = async (userInfo) => {
 };
 
 const destroyUser = async (userId) => {
-  const result = await User.destroy({ where: { id: userId } });
+  const result = await User.destroy({
+    where: { id: userId },
+    include: [{ model: Post }, { model: Tag }, { model: PostTag }],
+  });
   return result;
 };
 
