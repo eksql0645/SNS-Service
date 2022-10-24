@@ -29,10 +29,17 @@ const destroyUser = async (userId) => {
   return result;
 };
 
+const updateUserPassword = async (updateInfo) => {
+  const { email, password } = updateInfo;
+  const user = await User.update({ password }, { where: { email } });
+  return user;
+};
+
 module.exports = {
   createUser,
   updateUser,
   destroyUser,
+  updateUserPassword,
   findUserByEmail,
   findUserById,
 };

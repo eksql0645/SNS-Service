@@ -62,6 +62,18 @@ userRouter.patch(
   }
 );
 
+// 임시 비밀번호 생성
+userRouter.post('/:email/temp-password', async (req, res, next) => {
+  try {
+    const { email } = req.params;
+
+    const result = await userService.sendTempPasswordMail(email);
+    res.status(201).json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
 userRouter.delete(
   '/',
   loginRequired,

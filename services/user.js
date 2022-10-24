@@ -3,6 +3,7 @@ const errorCodes = require('../utils/errorCodes');
 const bcrypt = require('bcrypt');
 const { nanoid } = require('nanoid');
 const createToken = require('../utils/token');
+const nodemailer = require('../utils/nodemailer');
 
 /**
  * 회원가입
@@ -201,4 +202,48 @@ const deleteUser = async (userId, redis, currentPassword) => {
   return result;
 };
 
-module.exports = { addUser, getToken, getUser, setUser, deleteUser };
+const sendTempPasswordMail = async (email) => {
+  // 이메일 확인
+  let user = await userModel.findUserByEmail(email);
+  if (!user) {
+    throw new Error(errorCodes.canNotFindUser);
+  }
+
+  // 임시 비밀번호 생성
+  const tempPass = Math.random().toString(36).slice(2);
+
+  const data = {
+    from: process.env.MAIL_FROM,
+    to: email,
+    subject: 'SNS 서비스에서 임시비밀번호를 알려드립니다.',
+    html: `<h1>SNS 서비스에서 새로운 비밀번호를 알려드립니다.</h1> 
+    <h2> 임시 비밀번호: ${tempPass} </h2>
+    <h3>임시 비밀번호로 로그인 하신 후, 반드시 비밀번호를 수정해 주세요.</h3>
+    `,
+  };
+
+  // 비밀번호 암호화
+  const hashedTempPassword = await bcrypt.hash(tempPass, 10);
+
+  // 해당 이메일 유저의 비밀번호 수정
+  const updateInfo = { email, password: hashedTempPassword };
+
+  let result = await userModel.updateUserPassword(updateInfo);
+
+  if (!result[0]) {
+    throw new Error(errorCodes.notUpdate);
+  }
+
+  // 임시 비밀번호 발급 메일 전송
+  result = await nodemailer.send(data);
+
+  return result;
+};
+module.exports = {
+  addUser,
+  getToken,
+  getUser,
+  setUser,
+  deleteUser,
+  sendTempPasswordMail,
+};
