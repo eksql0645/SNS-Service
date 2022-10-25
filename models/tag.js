@@ -1,14 +1,11 @@
 const { Tag } = require('../db');
 
-const createTag = async (tag) => {
-  const newTag = await Tag.create(tag);
-  return newTag;
-};
-
-const findTag = async (tag) => {
-  const result = await Tag.findOne({ where: { tag } });
-
+const findOrCreateTag = async (tag, userId) => {
+  const result = await Tag.findOrCreate({
+    where: { tag },
+    defaults: { tagUserId: userId },
+  });
   return result;
 };
 
-module.exports = { createTag, findTag };
+module.exports = { findOrCreateTag };

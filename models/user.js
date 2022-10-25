@@ -1,4 +1,4 @@
-const { User } = require('../db');
+const { User, Post, Comment } = require('../db');
 
 const findUserByEmail = async (email) => {
   const user = await User.findOne({ where: { email } });
@@ -6,7 +6,10 @@ const findUserByEmail = async (email) => {
 };
 
 const findUserById = async (userId) => {
-  const user = await User.findOne({ where: { id: userId } });
+  const user = await User.findOne({
+    where: { id: userId },
+    include: [{ model: Post }, { model: Comment }],
+  });
   return user;
 };
 
@@ -25,14 +28,23 @@ const updateUser = async (userInfo) => {
 };
 
 const destroyUser = async (userId) => {
-  const result = await User.destroy({ where: { id: userId } });
+  const result = await User.destroy({
+    where: { id: userId },
+  });
   return result;
+};
+
+const updateUserPassword = async (updateInfo) => {
+  const { email, password } = updateInfo;
+  const user = await User.update({ password }, { where: { email } });
+  return user;
 };
 
 module.exports = {
   createUser,
   updateUser,
   destroyUser,
+  updateUserPassword,
   findUserByEmail,
   findUserById,
 };

@@ -38,7 +38,7 @@ module.exports = class User extends Sequelize.Model {
         underscored: true,
         modelName: 'User',
         tableName: 'users',
-        paranoid: true,
+        paranoid: false,
         charset: 'utf8mb4',
         collate: 'utf8mb4_general_ci',
       }
@@ -48,10 +48,17 @@ module.exports = class User extends Sequelize.Model {
     db.User.hasMany(db.Post, {
       foreignKey: 'postUserId',
       sourceKey: 'id',
+      onDelete: 'CASCADE',
     });
     db.User.hasMany(db.Comment, {
       foreignKey: 'comUserId',
       sourceKey: 'id',
+      onDelete: 'CASCADE',
+    });
+    db.User.hasMany(db.Tag, {
+      foreignKey: 'tagUserId',
+      sourceKey: 'id',
+      onDelete: 'CASCADE',
     });
   }
 };

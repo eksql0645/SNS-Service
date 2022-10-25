@@ -52,7 +52,7 @@ module.exports = class Post extends Sequelize.Model {
         underscored: true,
         modelName: 'Post',
         tableName: 'posts',
-        paranoid: true,
+        paranoid: false,
         charset: 'utf8mb4',
         collate: 'utf8mb4_general_ci',
       }
@@ -66,12 +66,13 @@ module.exports = class Post extends Sequelize.Model {
     db.Post.hasMany(db.Comment, {
       foreignKey: 'postId',
       sourceKey: 'id',
+      onDelete: 'CASCADE',
     });
     db.Post.belongsToMany(db.Tag, {
-      as: 'tag',
       through: 'PostTag',
       targetKey: 'id',
       foreignKey: 'postId',
+      onDelete: 'CASCADE',
     });
   }
 };

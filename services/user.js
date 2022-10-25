@@ -3,6 +3,7 @@ const errorCodes = require('../utils/errorCodes');
 const bcrypt = require('bcrypt');
 const { nanoid } = require('nanoid');
 const createToken = require('../utils/token');
+const nodemailer = require('../utils/nodemailer');
 
 /**
  * 회원가입
@@ -14,13 +15,25 @@ const createToken = require('../utils/token');
  * @param {String} userInfo.nick 닉네임
  * @returns {Object} 생성된 user 객체에서 비밀번호를 제외한 정보
  */
-const addUser = async (userInfo) => {
+const addUser = async (redis, userInfo) => {
   const { email, password } = userInfo;
 
-  // 이메일로 중복 회원 확인
-  let user = await userModel.findUserByEmail(email);
-  if (user) {
+  // 기존에 가입한 이력이 있는지 확인
+  const deletedUser = await redis.json.get(`deletedUser: ${email}`);
+  if (deletedUser) {
+    throw new Error(errorCodes.FindDeletedUser);
+  }
+
+  // 인증된 이메일로 중복 회원 확인
+  const exsitedEmail = await redis.HGET('authComplete', email);
+  if (!exsitedEmail) {
     throw new Error(errorCodes.alreadySignUpEmail);
+  }
+
+  // 임시 인증 완료 상태 확인
+  const isAuthCompleted = await redis.get(`authNumber: ${email}`);
+  if (!isAuthCompleted) {
+    throw new Error(errorCodes.unAuthUser);
   }
 
   // 비밀번호 해쉬화
@@ -28,7 +41,18 @@ const addUser = async (userInfo) => {
   userInfo.password = hashedPassword;
   userInfo.id = nanoid();
 
-  user = await userModel.createUser(userInfo);
+  // 유저 생성
+  const user = await userModel.createUser(userInfo);
+
+  // 인증 완료 상태 저장
+  await redis.HSET('authComplete', email, 1);
+  const result = await redis.HGET('authComplete', email);
+  if (!result) {
+    throw new Error(errorCodes.failedSaveAuthStatus);
+  }
+
+  // 임시 데이터 삭제
+  await redis.del(`authNumber: ${email}`);
 
   user.password = null;
 
@@ -47,8 +71,14 @@ const addUser = async (userInfo) => {
 const getToken = async (userInfo, redis) => {
   const { email, password } = userInfo;
 
+  // 인증된 회원인지 확인
+  let user = await redis.HGET('authComplete', email);
+  if (!user) {
+    throw new Error(errorCodes.unAuthUser);
+  }
+
   // 이메일로 회원 확인
-  const user = await userModel.findUserByEmail(email);
+  user = await userModel.findUserByEmail(email);
   if (!user) {
     throw new Error(errorCodes.canNotFindUser);
   }
@@ -104,8 +134,8 @@ const getUser = async (userId) => {
  * @param {String} userId user id
  * @returns {Object} 수정된 user 객체
  */
-const setUser = async (updateInfo) => {
-  const { currentPassword, password, userId } = updateInfo;
+const setUser = async (redis, updateInfo) => {
+  const { email, currentPassword, password, userId } = updateInfo;
 
   // 회원 확인
   let user = await userModel.findUserById(userId);
@@ -113,9 +143,28 @@ const setUser = async (updateInfo) => {
     throw new Error(errorCodes.canNotFindUser);
   }
 
+  // 기존 이메일
+  const preEmail = user.email;
+
+  // 새 이메일 인증상태 / 중복 확인
+  if (email) {
+    // 인증된 이메일 = 가입된 유저의 이메일 -> 새 이메일 중복 확인
+    const exsitedEmail = await redis.HGET('authComplete', email);
+    if (!exsitedEmail) {
+      throw new Error(errorCodes.alreadySignUpEmail);
+    }
+
+    // 임시 인증 완료 상태 확인
+    const isAuthCompleted = await redis.get(`authNumber: ${email}`);
+    if (!isAuthCompleted) {
+      throw new Error(errorCodes.unAuthUser);
+    }
+  }
+
   // 현재 비밀번호 일치 확인
   const hashedPassword = user.password;
   const isMatched = await bcrypt.compare(currentPassword, hashedPassword);
+
   if (!isMatched) {
     throw new Error(errorCodes.notCorrectPassword);
   }
@@ -135,18 +184,32 @@ const setUser = async (updateInfo) => {
     throw new Error(errorCodes.notUpdate);
   }
 
-  user = await userModel.findUserById(userId);
-  user.password = null;
-  return user;
+  // 수정 후 새 이메일 인증 상태 저장
+  if (email) {
+    // 기존 이메일 상태 데이터 삭제
+    await redis.HDEL('authComplete', preEmail);
+
+    // 새 이메일 인증 완료 상태 저장
+    await redis.HSET('authComplete', email, 1);
+    const result = await redis.HGET('authComplete', email);
+    if (!result) {
+      throw new Error(errorCodes.failedSaveAuthStatus);
+    }
+
+    // 임시 데이터 삭제
+    await redis.del(`authNumber: ${email}`);
+  }
+
+  return { message: '수정되었습니다.' };
 };
 
 /**
- * 회원 삭제
+ * 회원 탈퇴
  * @author JKS <eksql0645@gmail.com>
  * @function deleteUser
  * @param {String} userId user id
  * @param {String} currentPassword 현재 password
- * @returns {Object} 삭제 확인 메세지
+ * @returns {Object} 탈퇴 확인 메세지
  */
 const deleteUser = async (userId, redis, currentPassword) => {
   // 회원 확인
@@ -168,15 +231,98 @@ const deleteUser = async (userId, redis, currentPassword) => {
     throw new Error(errorCodes.serverError);
   }
 
+  // 레디스에 저장된 인증정보 / refreshToken 삭제
+  await redis.HDEL('authComplete', user.email);
+  await redis.HDEL('refreshToken', user.id);
+
   // 삭제 유저 레디스에 저장
-  await redis.json.set(`deletedUser: ${user.id}`, '$', user.dataValues);
+  await redis.json.set(`deletedUser: ${user.email}`, '$', user);
 
   // 30일 경과하면 삭제
-  await redis.expire(`deletedUser: ${user.id}`, 1296000);
+  await redis.expire(`deletedUser: ${user.email}`, 1296000);
 
   const result = { message: '탈퇴되었습니다.' };
 
   return result;
 };
 
-module.exports = { addUser, getToken, getUser, setUser, deleteUser };
+// 임시 비밀번호 전송
+const sendTempPasswordMail = async (email) => {
+  // 이메일 확인
+  let user = await userModel.findUserByEmail(email);
+  if (!user) {
+    throw new Error(errorCodes.canNotFindUser);
+  }
+
+  // 임시 비밀번호 생성
+  const tempPass = Math.random().toString(36).slice(2);
+
+  const data = {
+    from: process.env.MAIL_FROM,
+    to: email,
+    subject: 'SNS 서비스에서 임시비밀번호를 알려드립니다.',
+    html: `<h1>SNS 서비스에서 새로운 비밀번호를 알려드립니다.</h1> 
+    <h2> 임시 비밀번호: ${tempPass} </h2>
+    <h3>임시 비밀번호로 로그인 하신 후, 반드시 비밀번호를 수정해 주세요.</h3>
+    `,
+  };
+
+  // 비밀번호 암호화
+  const hashedTempPassword = await bcrypt.hash(tempPass, 10);
+
+  // 해당 이메일 유저의 비밀번호 수정
+  const updateInfo = { email, password: hashedTempPassword };
+
+  let result = await userModel.updateUserPassword(updateInfo);
+
+  if (!result[0]) {
+    throw new Error(errorCodes.notUpdate);
+  }
+
+  // 임시 비밀번호 발급 메일 전송
+  result = await nodemailer.send(data);
+
+  return result;
+};
+
+// 탈퇴 회원 확인
+const checkDeletedUser = async (redis, email) => {
+  const deletedUser = await redis.json.get(`deletedUser: ${email}`);
+  if (!deletedUser) {
+    throw new Error(errorCodes.canNotFindDeletedUser);
+  }
+  return { message: `${deletedUser.email}은 복구 가능한 계정입니다.` };
+};
+
+// 회원 복구
+const reCreateUser = async (redis, email, password) => {
+  // 탈퇴 회원 데이터 가져오기
+  const deletedUser = await redis.json.get(`deletedUser: ${email}`);
+  if (!deletedUser) {
+    throw new Error(errorCodes.canNotFindDeletedUser);
+  }
+
+  // 비밀번호 일치 확인
+  const isMatched = await bcrypt.compare(password, deletedUser.password);
+  if (!isMatched) {
+    throw new Error(errorCodes.notCorrectPassword);
+  }
+
+  // 기존 데이터 다시 생성
+  const restoredUser = await userModel.createUser(deletedUser);
+
+  restoredUser.password = null;
+
+  return deletedUser;
+};
+
+module.exports = {
+  addUser,
+  getToken,
+  getUser,
+  setUser,
+  deleteUser,
+  sendTempPasswordMail,
+  checkDeletedUser,
+  reCreateUser,
+};

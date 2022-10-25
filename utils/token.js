@@ -28,7 +28,7 @@ module.exports = {
     });
   },
   // refresh token 검증
-  refreshTokenVarify: async (redis, token, userId) => {
+  refreshTokenVerify: async (redis, token, userId) => {
     const refreshToken = await redis.HGET('refreshToken', userId);
     if (token === refreshToken) {
       const refreshDecoded = jwt.verify(token, secret);

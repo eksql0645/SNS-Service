@@ -1,7 +1,6 @@
 const bcrypt = require('bcrypt');
-const { postModel, userModel, tagModel, postTagModel } = require('../models');
+const { postModel, userModel, tagModel } = require('../models');
 const errorCodes = require('../utils/errorCodes');
-const { nanoid } = require('nanoid');
 const { getQuery } = require('../utils/getQuery');
 
 /**
@@ -28,60 +27,26 @@ const addPost = async (postInfo) => {
   // 문자열로 된 태그 구분 짓기
   let tagList = postInfo.tag.split(',');
 
+  // 중복 제거
+  tagList = [...new Set(tagList)];
+
   // postInfo에서 tag 삭제
   delete postInfo.tag;
 
-  // 각 태그를 id와 함께 객체로 재구성
-
-  tagList = await Promise.all(
-    tagList.map(async (tag) => {
-      // 이미 존재하는 태그인지 확인
-      const isExistedTag = await tagModel.findTag(tag);
-      // 새로운 태그라면 nanoid와 tag 할당
-      if (!isExistedTag) {
-        return {
-          id: nanoid(),
-          tag,
-        };
-      }
-      // 이미 존재하는 태그라면 기존 태그의 id만 반환
-      return {
-        id: isExistedTag.id,
-      };
+  // tag 확인 후 생성
+  const newTagList = await Promise.all(
+    tagList.map((ele) => {
+      const tag = ele.slice(1).toLowerCase();
+      return tagModel.findOrCreateTag(tag, user.id);
     })
   );
-
-  // 이미 존재하는 태그의 경우
-  const existedTag = tagList.filter((ele) => {
-    return !ele.tag;
-  });
-
-  // 새로운 태그의 경우
-  const newTag = tagList.filter((ele) => {
-    return ele.tag;
-  });
 
   // 게시글 생성
   const post = await postModel.createPost(postInfo);
 
-  // 게시글 생성 후 tag 및 중간테이블 데이터 생성
-  if (tagList.length !== 0) {
-    // 기존에 생성된 태그가 있는 경우
-    if (existedTag.length !== 0) {
-      // 중간테이블 데이터만 생성
-      existedTag.map(async (tag) => {
-        await postTagModel.createPostTag(tag.id, post.id);
-      });
-    }
-    // 새로운 태그가 있는 경우
-    if (newTag.length !== 0) {
-      // 태그 및 중간테이블 데이터 생성
-      newTag.map(async (tag) => {
-        const newTag = await tagModel.createTag(tag);
-        await postTagModel.createPostTag(newTag.id, post.id);
-      });
-    }
-  }
+  // 게시글과 태그 연결
+  await post.addTags(newTagList.map((ele) => ele[0]));
+
   return post;
 };
 
