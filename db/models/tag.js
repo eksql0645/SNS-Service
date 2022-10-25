@@ -27,6 +27,11 @@ module.exports = class Tag extends Sequelize.Model {
       through: 'PostTag',
       targetKey: 'id',
       foreignKey: 'tagId',
+      onDelete: 'CASCADE',
+    });
+    db.Tag.belongsTo(db.User, {
+      foreignKey: 'tagUserId',
+      targetKey: 'id',
     });
   }
 };

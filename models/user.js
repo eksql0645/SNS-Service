@@ -30,7 +30,6 @@ const updateUser = async (userInfo) => {
 const destroyUser = async (userId) => {
   const result = await User.destroy({
     where: { id: userId },
-    include: [{ model: Post }, { model: Comment }],
   });
   return result;
 };

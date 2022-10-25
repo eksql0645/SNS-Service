@@ -231,8 +231,12 @@ const deleteUser = async (userId, redis, currentPassword) => {
     throw new Error(errorCodes.serverError);
   }
 
+  // 레디스에 저장된 인증정보 / refreshToken 삭제
+  await redis.HDEL('authComplete', user.email);
+  await redis.HDEL('refreshToken', user.id);
+
   // 삭제 유저 레디스에 저장
-  await redis.json.set(`deletedUser: ${user.email}`, '$', user.dataValues);
+  await redis.json.set(`deletedUser: ${user.email}`, '$', user);
 
   // 30일 경과하면 삭제
   await redis.expire(`deletedUser: ${user.email}`, 1296000);
@@ -290,6 +294,7 @@ const checkDeletedUser = async (redis, email) => {
   return { message: `${deletedUser.email}은 복구 가능한 계정입니다.` };
 };
 
+// 회원 복구
 const reCreateUser = async (redis, email, password) => {
   // 탈퇴 회원 데이터 가져오기
   const deletedUser = await redis.json.get(`deletedUser: ${email}`);
@@ -308,7 +313,7 @@ const reCreateUser = async (redis, email, password) => {
 
   restoredUser.password = null;
 
-  return restoredUser;
+  return deletedUser;
 };
 
 module.exports = {

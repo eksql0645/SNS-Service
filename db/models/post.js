@@ -66,11 +66,13 @@ module.exports = class Post extends Sequelize.Model {
     db.Post.hasMany(db.Comment, {
       foreignKey: 'postId',
       sourceKey: 'id',
+      onDelete: 'CASCADE',
     });
     db.Post.belongsToMany(db.Tag, {
       through: 'PostTag',
       targetKey: 'id',
       foreignKey: 'postId',
+      onDelete: 'CASCADE',
     });
   }
 };

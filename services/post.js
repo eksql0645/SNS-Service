@@ -37,7 +37,7 @@ const addPost = async (postInfo) => {
   const newTagList = await Promise.all(
     tagList.map((ele) => {
       const tag = ele.slice(1).toLowerCase();
-      return tagModel.findOrCreateTag(tag);
+      return tagModel.findOrCreateTag(tag, user.id);
     })
   );
 

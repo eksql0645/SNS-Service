@@ -48,10 +48,17 @@ module.exports = class User extends Sequelize.Model {
     db.User.hasMany(db.Post, {
       foreignKey: 'postUserId',
       sourceKey: 'id',
+      onDelete: 'CASCADE',
     });
     db.User.hasMany(db.Comment, {
       foreignKey: 'comUserId',
       sourceKey: 'id',
+      onDelete: 'CASCADE',
+    });
+    db.User.hasMany(db.Tag, {
+      foreignKey: 'tagUserId',
+      sourceKey: 'id',
+      onDelete: 'CASCADE',
     });
   }
 };
