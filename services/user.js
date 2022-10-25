@@ -24,9 +24,9 @@ const addUser = async (redis, userInfo) => {
     throw new Error(errorCodes.FindDeletedUser);
   }
 
-  // 이메일로 중복 회원 확인
-  let user = await userModel.findUserByEmail(email);
-  if (user) {
+  // 인증된 이메일로 중복 회원 확인
+  const exsitedEmail = await redis.HGET('authComplete', email);
+  if (!exsitedEmail) {
     throw new Error(errorCodes.alreadySignUpEmail);
   }
 
@@ -41,6 +41,9 @@ const addUser = async (redis, userInfo) => {
   userInfo.password = hashedPassword;
   userInfo.id = nanoid();
 
+  // 유저 생성
+  const user = await userModel.createUser(userInfo);
+
   // 인증 완료 상태 저장
   await redis.HSET('authComplete', email, 1);
   const result = await redis.HGET('authComplete', email);
@@ -50,8 +53,6 @@ const addUser = async (redis, userInfo) => {
 
   // 임시 데이터 삭제
   await redis.del(`authNumber: ${email}`);
-
-  user = await userModel.createUser(userInfo);
 
   user.password = null;
 
@@ -70,8 +71,14 @@ const addUser = async (redis, userInfo) => {
 const getToken = async (userInfo, redis) => {
   const { email, password } = userInfo;
 
+  // 인증된 회원인지 확인
+  let user = await redis.HGET('authComplete', email);
+  if (!user) {
+    throw new Error(errorCodes.unAuthUser);
+  }
+
   // 이메일로 회원 확인
-  const user = await userModel.findUserByEmail(email);
+  user = await userModel.findUserByEmail(email);
   if (!user) {
     throw new Error(errorCodes.canNotFindUser);
   }
@@ -139,11 +146,11 @@ const setUser = async (redis, updateInfo) => {
   // 기존 이메일
   const preEmail = user.email;
 
-  // 이메일을 변경한다면 인증된 상태인지 확인
+  // 새 이메일 인증상태 / 중복 확인
   if (email) {
-    // 새 이메일 중복 확인
-    let user = await userModel.findUserByEmail(email);
-    if (user) {
+    // 인증된 이메일 = 가입된 유저의 이메일 -> 새 이메일 중복 확인
+    const exsitedEmail = await redis.HGET('authComplete', email);
+    if (!exsitedEmail) {
       throw new Error(errorCodes.alreadySignUpEmail);
     }
 
@@ -152,19 +159,6 @@ const setUser = async (redis, updateInfo) => {
     if (!isAuthCompleted) {
       throw new Error(errorCodes.unAuthUser);
     }
-
-    // 기존 이메일 상태 데이터 삭제
-    await redis.HDEL('authComplete', preEmail);
-
-    // 새 이메일 인증 완료 상태 저장
-    await redis.HSET('authComplete', email, 1);
-    const result = await redis.HGET('authComplete', email);
-    if (!result) {
-      throw new Error(errorCodes.failedSaveAuthStatus);
-    }
-
-    // 임시 데이터 삭제
-    await redis.del(`authNumber: ${email}`);
   }
 
   // 현재 비밀번호 일치 확인
@@ -190,9 +184,23 @@ const setUser = async (redis, updateInfo) => {
     throw new Error(errorCodes.notUpdate);
   }
 
-  user = await userModel.findUserById(userId);
-  user.password = null;
-  return user;
+  // 수정 후 새 이메일 인증 상태 저장
+  if (email) {
+    // 기존 이메일 상태 데이터 삭제
+    await redis.HDEL('authComplete', preEmail);
+
+    // 새 이메일 인증 완료 상태 저장
+    await redis.HSET('authComplete', email, 1);
+    const result = await redis.HGET('authComplete', email);
+    if (!result) {
+      throw new Error(errorCodes.failedSaveAuthStatus);
+    }
+
+    // 임시 데이터 삭제
+    await redis.del(`authNumber: ${email}`);
+  }
+
+  return { message: '수정되었습니다.' };
 };
 
 /**

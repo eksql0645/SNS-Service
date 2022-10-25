@@ -1,11 +1,10 @@
-const { userModel } = require('../models');
 const nodemailer = require('../utils/nodemailer');
 const errorCodes = require('../utils/errorCodes');
 
 const sendAuthMail = async (redis, email) => {
-  // 이메일로 중복 회원 확인
-  let user = await userModel.findUserByEmail(email);
-  if (user) {
+  // 인증된 이메일로 중복 회원 확인
+  const exsitedEmail = await redis.HGET('authComplete', email);
+  if (!exsitedEmail) {
     throw new Error(errorCodes.alreadySignUpEmail);
   }
 
