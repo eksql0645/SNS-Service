@@ -4,7 +4,7 @@ const errorCodes = require('../utils/errorCodes');
 const sendAuthMail = async (redis, email) => {
   // 인증된 이메일로 중복 회원 확인
   const exsitedEmail = await redis.HGET('authComplete', email);
-  if (!exsitedEmail) {
+  if (exsitedEmail) {
     throw new Error(errorCodes.alreadySignUpEmail);
   }
 
@@ -15,7 +15,7 @@ const sendAuthMail = async (redis, email) => {
   await redis.set(`authNumber: ${email}`, authNumber);
 
   // Redis에 저장되었는지 확인
-  const existedAuthNumber = await redis.set(`authNumber: ${email}`, authNumber);
+  const existedAuthNumber = await redis.get(`authNumber: ${email}`, authNumber);
   if (!existedAuthNumber) {
     throw new Error(errorCodes.failedSaveAuthNumber);
   }
@@ -52,10 +52,10 @@ const checkAuthNumber = async (authInfo) => {
   }
 
   // 해당 이메일과 인증완료 상태 임시 저장 (인증완료: 1)
-  await redis.set(`authNumber: ${email}`, authNumber);
+  await redis.set(`tempAuthStatus: ${email}`, 1);
 
   // 10분 캐싱
-  await redis.expire(`authNumber: ${email}`, 600);
+  await redis.expire(`tempAuthStatus: ${email}`, 600);
 
   // Redis에 저장된 인증번호 삭제
   await redis.del(`authNumber: ${email}`);

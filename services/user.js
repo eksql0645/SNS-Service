@@ -28,12 +28,14 @@ const addUser = async (redis, userInfo) => {
 
   // 인증된 이메일로 중복 회원 확인
   const exsitedEmail = await redis.HGET('authComplete', email);
-  if (!exsitedEmail) {
+
+  if (exsitedEmail) {
     throw new Error(errorCodes.alreadySignUpEmail);
   }
 
   // 임시 인증 완료 상태 확인
-  const isAuthCompleted = await redis.get(`authNumber: ${email}`);
+  const isAuthCompleted = await redis.get(`tempAuthStatus: ${email}`);
+
   if (!isAuthCompleted) {
     throw new Error(errorCodes.unAuthUser);
   }
@@ -54,7 +56,7 @@ const addUser = async (redis, userInfo) => {
   }
 
   // 임시 데이터 삭제
-  await redis.del(`authNumber: ${email}`);
+  await redis.del(`tempAuthStatus: ${email}`);
 
   user.password = null;
 
@@ -157,7 +159,7 @@ const setUser = async (redis, updateInfo) => {
     }
 
     // 임시 인증 완료 상태 확인
-    const isAuthCompleted = await redis.get(`authNumber: ${email}`);
+    const isAuthCompleted = await redis.get(`tempAuthStatus: ${email}`);
     if (!isAuthCompleted) {
       throw new Error(errorCodes.unAuthUser);
     }
@@ -199,7 +201,7 @@ const setUser = async (redis, updateInfo) => {
     }
 
     // 임시 데이터 삭제
-    await redis.del(`authNumber: ${email}`);
+    await redis.del(`tempAuthStatus: ${email}`);
   }
 
   return { message: '수정되었습니다.' };
