@@ -18,11 +18,13 @@ const nodemailer = require('../utils/nodemailer');
 const addUser = async (redis, userInfo) => {
   const { email, password } = userInfo;
 
+  /**  복구 기능 미완성으로 주석처리
   // 기존에 가입한 이력이 있는지 확인
   const deletedUser = await redis.json.get(`deletedUser: ${email}`);
   if (deletedUser) {
     throw new Error(errorCodes.FindDeletedUser);
   }
+  */
 
   // 인증된 이메일로 중복 회원 확인
   const exsitedEmail = await redis.HGET('authComplete', email);
@@ -285,6 +287,7 @@ const sendTempPasswordMail = async (email) => {
   return result;
 };
 
+/** 
 // 탈퇴 회원 확인
 const checkDeletedUser = async (redis, email) => {
   const deletedUser = await redis.json.get(`deletedUser: ${email}`);
@@ -293,6 +296,7 @@ const checkDeletedUser = async (redis, email) => {
   }
   return { message: `${deletedUser.email}은 복구 가능한 계정입니다.` };
 };
+
 
 // 회원 복구
 const reCreateUser = async (redis, email, password) => {
@@ -308,14 +312,14 @@ const reCreateUser = async (redis, email, password) => {
     throw new Error(errorCodes.notCorrectPassword);
   }
 
-  // 기존 데이터 다시 생성
+  // 인증 데이터 및 기존 데이터 다시 생성
   const restoredUser = await userModel.createUser(deletedUser);
 
   restoredUser.password = null;
 
   return deletedUser;
 };
-
+*/
 module.exports = {
   addUser,
   getToken,
@@ -323,6 +327,6 @@ module.exports = {
   setUser,
   deleteUser,
   sendTempPasswordMail,
-  checkDeletedUser,
-  reCreateUser,
+  // checkDeletedUser,
+  // reCreateUser,
 };

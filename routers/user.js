@@ -100,6 +100,7 @@ userRouter.post('/:email/temp-password', async (req, res, next) => {
   }
 });
 
+/** 
 // 탈퇴 회원 확인
 userRouter.get('/deleted-user', async (req, res, next) => {
   try {
@@ -126,4 +127,5 @@ userRouter.post('/deleted-user/:email', async (req, res, next) => {
     next(err);
   }
 });
+*/
 module.exports = userRouter;
