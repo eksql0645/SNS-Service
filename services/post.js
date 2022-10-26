@@ -2,7 +2,8 @@ const bcrypt = require('bcrypt');
 const { postModel, userModel, tagModel } = require('../models');
 const errorCodes = require('../utils/errorCodes');
 const { getQuery } = require('../utils/getQuery');
-
+const papago = require('../utils/papago/translation');
+const detectLangs = require('../utils/papago/detectLangs');
 /**
  * 게시글 생성
  * @author JKS <eksql0645@gmail.com>
@@ -165,7 +166,7 @@ const setPost = async (id, userId, data) => {
  * @returns {Object} 삭제 확인 메세지
  */
 const deletePost = async (deleteInfo) => {
-  const { id, userId, password, redis } = deleteInfo;
+  const { id, userId, password } = deleteInfo;
 
   // 해당 게시글이 있는지 확인
   const post = await postModel.findPost(id);
@@ -189,18 +190,11 @@ const deletePost = async (deleteInfo) => {
     throw new Error(errorCodes.notCorrectPassword);
   }
 
-  // DB 상에서 soft delete
   const isdeleted = await postModel.destroyPost(id);
 
   if (!isdeleted) {
     throw new Error(errorCodes.serverError);
   }
-
-  // 삭제할 게시글 레디스에 저장
-  await redis.json.set(`deletedPost: ${post.id}`, '$', post.dataValues);
-
-  // 30일 경과하면 삭제
-  await redis.expire(`deletedPost: ${post.id}`, 1296000);
 
   const result = { message: '탈퇴되었습니다.' };
 
@@ -296,6 +290,28 @@ const unlikePost = async (id, userId, redis) => {
   return result;
 };
 
+/**
+ * 게시글 번역
+ * @author JKS <eksql0645@gmail.com>
+ * @function translatePost
+ * @param {String} id 게시글 id
+ * @returns {Object} 번역된 게시글 내용
+ */
+const translatePost = async (id) => {
+  let post = await postModel.findPost(id);
+  if (!post) {
+    throw new Error(errorCodes.canNotFindPost);
+  }
+
+  // 언어 감지
+  const lang = await detectLangs(post.content);
+
+  // 번역
+  const content = await papago(post.content, lang);
+
+  return content;
+};
+
 module.exports = {
   addPost,
   getPosts,
@@ -304,4 +320,5 @@ module.exports = {
   deletePost,
   likePost,
   unlikePost,
+  translatePost,
 };
