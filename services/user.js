@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 const { nanoid } = require('nanoid');
 const createToken = require('../utils/token');
 const nodemailer = require('../utils/nodemailer');
+const moment = require('moment');
 
 /**
  * 회원가입
@@ -26,37 +27,67 @@ const addUser = async (redis, userInfo) => {
   }
   */
 
+  const q = moment();
+
   // 인증된 이메일로 중복 회원 확인
-  const exsitedEmail = await redis.HGET('authComplete', email);
+  const [exsitedEmail, isAuthCompleted] = await redis
+    .multi()
+    .HGET('authComplete', email)
+    .get(`tempAuthStatus: ${email}`)
+    .exec();
 
   if (exsitedEmail) {
     throw new Error(errorCodes.alreadySignUpEmail);
   }
 
-  // 임시 인증 완료 상태 확인
-  const isAuthCompleted = await redis.get(`tempAuthStatus: ${email}`);
-
   if (!isAuthCompleted) {
     throw new Error(errorCodes.unAuthUser);
   }
+
+  let q2 = moment();
+  console.log(
+    '인증된 이메일로 중복 회원 확인 / 임시 인증 완료 상태 확인',
+    q2.diff(q)
+  );
+
+  let q3 = moment();
 
   // 비밀번호 해쉬화
   const hashedPassword = await bcrypt.hash(password, 10);
   userInfo.password = hashedPassword;
   userInfo.id = nanoid();
 
+  let q4 = moment();
+
+  console.log('비밀번호 해쉬화', q4.diff(q3));
+
+  q4 = moment();
+
   // 유저 생성
   const user = await userModel.createUser(userInfo);
 
+  let q5 = moment();
+
+  console.log('유저 생성', q5.diff(q4));
+
+  q5 = moment();
+
   // 인증 완료 상태 저장
-  await redis.HSET('authComplete', email, 1);
-  const result = await redis.HGET('authComplete', email);
-  if (!result) {
+  // eslint-disable-next-line no-unused-vars
+  const [setResult, getResult] = await redis
+    .multi()
+    .HSET('authComplete', email, 1)
+    .HGET('authComplete', email)
+    .del(`tempAuthStatus: ${email}`)
+    .exec();
+
+  if (!getResult) {
     throw new Error(errorCodes.failedSaveAuthStatus);
   }
 
-  // 임시 데이터 삭제
-  await redis.del(`tempAuthStatus: ${email}`);
+  let q6 = moment();
+
+  console.log('인증 완료 상태 저장 / 임시 데이터 삭제', q6.diff(q5));
 
   user.password = null;
 
