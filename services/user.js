@@ -240,15 +240,13 @@ const deleteUser = async (userId, redis, currentPassword) => {
     throw new Error(errorCodes.serverError);
   }
 
-  // 레디스에 저장된 인증정보 / refreshToken 삭제
-  await redis.HDEL('authComplete', user.email);
-  await redis.HDEL('refreshToken', user.id);
-
-  // 삭제 유저 레디스에 저장
-  await redis.json.set(`deletedUser: ${user.email}`, '$', user);
-
-  // 30일 경과하면 삭제
-  await redis.expire(`deletedUser: ${user.email}`, 1296000);
+  await redis
+    .multi()
+    .HDEL('authComplete', user.email) // 레디스에 저장된 인증정보 삭제
+    .HDEL('refreshToken', user.id) // refreshToken 삭제
+    .json.set(`deletedUser: ${user.email}`, '$', user) // 삭제 유저 레디스에 저장
+    .expire(`deletedUser: ${user.email}`, 1296000) // 30일 경과하면 삭제
+    .exec();
 
   const result = { message: '탈퇴되었습니다.' };
 
