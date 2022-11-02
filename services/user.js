@@ -26,18 +26,13 @@ const addUser = async (redis, userInfo) => {
   }
   */
 
-  // 인증된 이메일로 중복 회원 확인
-  const [exsitedEmail, isAuthCompleted] = await redis
+  // 임시 인증 상태 확인
+  const isAuthCompleted = await redis
     .multi()
-    .HGET('authComplete', email)
     .get(`tempAuthStatus: ${email}`)
     .exec();
 
-  if (exsitedEmail) {
-    throw new Error(errorCodes.alreadySignUpEmail);
-  }
-
-  if (!isAuthCompleted) {
+  if (!isAuthCompleted[0]) {
     throw new Error(errorCodes.unAuthUser);
   }
 
@@ -50,17 +45,11 @@ const addUser = async (redis, userInfo) => {
   const user = await userModel.createUser(userInfo);
 
   // 인증 완료 상태 저장
-  // eslint-disable-next-line no-unused-vars
-  const [setResult, getResult] = await redis
+  await redis
     .multi()
     .HSET('authComplete', email, 1)
-    .HGET('authComplete', email)
     .del(`tempAuthStatus: ${email}`)
     .exec();
-
-  if (!getResult) {
-    throw new Error(errorCodes.failedSaveAuthStatus);
-  }
 
   user.password = null;
 
@@ -154,19 +143,14 @@ const setUser = async (redis, updateInfo) => {
   // 기존 이메일
   const preEmail = user.email;
 
-  // 새 이메일 중복 / 인증상태 확인
+  // 새 이메일 인증상태 확인
   if (email) {
-    // 인증된 이메일 = 가입된 유저의 이메일 -> 새 이메일 중복 확인
-    const [exsitedEmail, isAuthCompleted] = await redis
+    const isAuthCompleted = await redis
       .multi()
-      .HGET('authComplete', email)
       .get(`tempAuthStatus: ${email}`)
       .exec();
 
-    if (exsitedEmail) {
-      throw new Error(errorCodes.alreadySignUpEmail);
-    }
-    if (!isAuthCompleted) {
+    if (!isAuthCompleted[0]) {
       throw new Error(errorCodes.unAuthUser);
     }
   }
@@ -195,18 +179,12 @@ const setUser = async (redis, updateInfo) => {
   }
 
   if (email) {
-    // eslint-disable-next-line no-unused-vars
-    const [hdelResult, setResult, getResult, delResult] = await redis
+    await redis
       .multi()
       .HDEL('authComplete', preEmail) // 기존 이메일 상태 데이터 삭제
       .HSET('authComplete', email, 1) // 새 이메일 인증 완료 상태 저장
-      .HGET('authComplete', email)
       .del(`tempAuthStatus: ${email}`) // 임시 데이터 삭제
       .exec();
-
-    if (!getResult) {
-      throw new Error(errorCodes.failedSaveAuthStatus);
-    }
   }
 
   return { message: '수정되었습니다.' };
@@ -240,15 +218,28 @@ const deleteUser = async (userId, redis, currentPassword) => {
     throw new Error(errorCodes.serverError);
   }
 
-  await redis
+  let result = await redis
     .multi()
     .HDEL('authComplete', user.email) // 레디스에 저장된 인증정보 삭제
     .HDEL('refreshToken', user.id) // refreshToken 삭제
-    .json.set(`deletedUser: ${user.email}`, '$', user) // 삭제 유저 레디스에 저장
+    .set(`deletedUser: ${user.email}`, user) // 탈퇴 유저 레디스에 저장
+    .get(`deletedUser: ${user.email}`) // 탈퇴 유저 확인
     .expire(`deletedUser: ${user.email}`, 1296000) // 30일 경과하면 삭제
     .exec();
 
-  const result = { message: '탈퇴되었습니다.' };
+  if (!result[0]) {
+    throw new Error(errorCodes.failedDeleteAuthUser);
+  }
+
+  if (!result[1]) {
+    throw new Error(errorCodes.failedDeleteRefreshToken);
+  }
+
+  if (!result[3]) {
+    throw new Error(errorCodes.failedSaveDeletedUser);
+  }
+
+  result = { message: '탈퇴되었습니다.' };
 
   return result;
 };

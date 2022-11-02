@@ -16,6 +16,8 @@ module.exports = {
   failedSignUp: '회원가입 중 문제가 생겼습니다. 다시 시도해주세요.',
   isNotLiker: '좋아요를 눌러야 취소가 가능합니다.',
   isLiker: '이미 해당 게시글에 좋아요를 눌렀습니다.',
+  failedDeleteAuthUser: '인증 완료된 회원 삭제에 실패했습니다.',
+  failedSaveDeletedUser: '탈퇴 회원 저장에 실패했습니다.',
   // AUTH
   failedSendEmail: '이메일 전송에 실패했습니다.',
   failedSaveAuthNumber: '발급된 authNumber가 저장되지 않았습니다.',
@@ -24,6 +26,8 @@ module.exports = {
   failedAuth: '인증번호가 일치하지 않습니다.',
   failedSaveAuthStatus: '인증상태가 저장되지 않았습니다.',
   unAuthUser: '인증되지 않은 회원입니다.',
+  failedDeleteRefreshToken: 'RefreshToken 삭제에 실패했습니다.',
+  failUpdateData: 'DelPreEmail / setEmail / DelTempAuthStatus: ',
   // POST
   canNotFindPost: '게시글이 존재하지 않습니다.',
   canNotCreatePost: '게시글이 생성되지 않았습니다.',

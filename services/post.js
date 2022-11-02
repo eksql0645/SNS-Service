@@ -108,10 +108,10 @@ const getPost = async (id, userId, redis) => {
     throw new Error(errorCodes.canNotFindPost);
   }
 
-  // 해당 게시글에 좋아요한 유저인지 확인: T/F 반환
+  // 해당 유저가 게시글에 좋아요한 유저인지 확인: T/F 반환
   if (userId) {
-    const existedLiker = await redis.SISMEMBER(`liker: post${id}`, userId);
-    post.existedLiker = existedLiker;
+    const isLiker = await redis.SISMEMBER(`liker: post${id}`, userId);
+    post.dataValues.isLiker = isLiker;
   }
 
   return post;
