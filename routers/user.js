@@ -92,8 +92,8 @@ userRouter.delete(
 userRouter.post('/:email/temp-password', async (req, res, next) => {
   try {
     const { email } = req.params;
-
-    const result = await userService.sendTempPasswordMail(email);
+    const redis = req.app.get('redis');
+    const result = await userService.sendTempPasswordMail(redis, email);
     res.status(201).json(result);
   } catch (err) {
     next(err);

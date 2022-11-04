@@ -223,21 +223,8 @@ const deleteUser = async (userId, redis, currentPassword) => {
     .HDEL('authComplete', user.email) // 레디스에 저장된 인증정보 삭제
     .HDEL('refreshToken', user.id) // refreshToken 삭제
     .set(`deletedUser: ${user.email}`, user) // 탈퇴 유저 레디스에 저장
-    .get(`deletedUser: ${user.email}`) // 탈퇴 유저 확인
     .expire(`deletedUser: ${user.email}`, 1296000) // 30일 경과하면 삭제
     .exec();
-
-  if (!result[0]) {
-    throw new Error(errorCodes.failedDeleteAuthUser);
-  }
-
-  if (!result[1]) {
-    throw new Error(errorCodes.failedDeleteRefreshToken);
-  }
-
-  if (!result[3]) {
-    throw new Error(errorCodes.failedSaveDeletedUser);
-  }
 
   result = { message: '탈퇴되었습니다.' };
 
@@ -245,11 +232,11 @@ const deleteUser = async (userId, redis, currentPassword) => {
 };
 
 // 임시 비밀번호 전송
-const sendTempPasswordMail = async (email) => {
-  // 이메일 확인
-  let user = await userModel.findUserByEmail(email);
-  if (!user) {
-    throw new Error(errorCodes.canNotFindUser);
+const sendTempPasswordMail = async (redis, email) => {
+  // 인증된 이메일로 중복 회원 확인
+  const exsitedEmail = await redis.HGET('authComplete', email);
+  if (exsitedEmail) {
+    throw new Error(errorCodes.alreadySignUpEmail);
   }
 
   // 임시 비밀번호 생성
