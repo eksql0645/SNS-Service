@@ -21,15 +21,14 @@ postRouter.post(
   addPostValidator(),
   async (req, res, next) => {
     try {
-      const { title, content, image, tag } = req.body;
+      const { title, content, tag, url } = req.body;
       const userId = req.currentUserId;
       const weather = await weatherAPI();
-
       const postInfo = {
         id: nanoid(),
         title,
         content,
-        image,
+        image: url,
         weather,
         postUserId: userId,
         tag,
