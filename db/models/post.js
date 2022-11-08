@@ -22,7 +22,7 @@ module.exports = class Post extends Sequelize.Model {
           allowNull: false,
         },
         image: {
-          type: Sequelize.STRING(60),
+          type: Sequelize.STRING(300),
           allowNull: true,
           defaultValue: null,
         },

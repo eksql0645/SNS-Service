@@ -5,6 +5,7 @@ module.exports = {
   notUpdate: '수정된 내용이 없습니다.',
   notDelete: '삭제되지 않았습니다.',
   serverError: '서버 에러가 발생하였습니다. 잠시 후 시도하여 주세요.',
+  multerError: '업로드 파일의 형식이 지원하지 않는 형식입니다.',
   // USER
   canNotFindUser: '존재하지 않는 회원입니다.',
   canNotFindDeletedUser:

@@ -1,38 +1,43 @@
 const { Router } = require('express');
-// const { loginRequired } = require('../middlewares/loginRequired');
-const fs = require('fs');
-const path = require('path');
+const { loginRequired } = require('../middlewares/loginRequired');
 const multer = require('multer');
-
-try {
-  fs.readdirSync('public/uploads');
-} catch (err) {
-  console.error('uploads 폴더가 없어 uploads 폴더를 생성합니다.');
-  fs.mkdirSync('public/uploads');
-}
+const { s3Upload } = require('../utils/awsclient');
+const errorCodes = require('../utils/errorCodes');
 
 const imageRouter = Router();
 
-// 이미지 업로드 설정
+const storage = multer.memoryStorage();
+
+const fileFilter = (req, file, cb) => {
+  console.log('fileFilter', file);
+  if (file.mimetype.split('/')[0] === 'image') {
+    cb(null, true);
+  } else {
+    cb(new multer.MulterError(errorCodes.multerError), false);
+  }
+};
+
 const upload = multer({
-  storage: multer.diskStorage({
-    // 이미지 파일 저장 위치
-    destination(req, file, done) {
-      done(null, 'public/uploads/');
-    },
-    // 이미지 파일 이름 설정
-    filename(req, file, done) {
-      const ext = path.extname(file.originalname);
-      done(null, path.basename(file.originalname, ext) + Date.now() + ext);
-    },
-  }),
-  limits: { fileSize: 5 * 1024 * 1024 },
+  storage,
+  fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024, files: 1 },
 });
 
 // 이미지 하나만 생성
-imageRouter.post('/', upload.single('img'), (req, res) => {
-  console.log(req.file);
-  res.json({ url: `uploads/${req.file.filename}` });
-});
+imageRouter.post(
+  '/',
+  loginRequired,
+  upload.single('file'),
+  async (req, res) => {
+    const file = req.file;
+    try {
+      const { result, filename } = await s3Upload(file);
+      console.log(result);
+      return res.json({ url: `${process.env.AWS_S3_URL}${filename}` });
+    } catch (err) {
+      console.log(err);
+    }
+  }
+);
 
 module.exports = imageRouter;
