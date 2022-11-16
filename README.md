@@ -5,7 +5,7 @@
 추가 예정
 
 ## 프로젝트 목표
-- 요구사항에 적합한 SNS 기능을 구현하는 것이 목표입니다.
+- 보편적인 SNS 기능을 구현하는 것이 목표입니다.
 - 지속적인 기능 추가 및 개선을 통해 더 고도화된 서비스를 제공하는 것이 목표입니다.
 - 향후 TypeScript/Nest를 적용하여 타입 안정화하는 것이 목표입니다.
 - 향후 배포 및 CI/CD 적용으로 지속적인 서비스 제공을 목표로 합니다.
@@ -33,13 +33,11 @@
 
 ## ISSUE 해결 과정
 
-[nodemailer를 사용한 이메일 인증 구현 과정]()
-
-[findOrCreate 쿼리를 이용한 게시글 생성 API 코드 개선]()
-
-[JWT 사용 시 토큰 탈취에 대한 문제]()
-
 [Redis multi를 적용하여 응답 속도 개선](https://k2eo.tistory.com/23)
+
+[AWS S3를 적용한 이미지 업로드 기능 구현 과정](https://k2eo.tistory.com/26)
+
+[nodemailer를 사용한 이메일 인증 구현 과정](https://k2eo.tistory.com/24)
 
 ## ERD
 ![image](https://user-images.githubusercontent.com/80232260/199373748-4fd1317f-05c6-4bd4-b727-563de49a1fe9.png)
@@ -48,7 +46,7 @@
 추가 예정
 
 ## 컨벤션
-[여기]()를 참고하세요.
+[Wiki]()를 참고하세요.
 
 ## 기술 스택
 <img src="https://img.shields.io/badge/node.js-339933?style=for-the-badge&logo=Node.js&logoColor=white"> <img src="https://img.shields.io/badge/express-FCC624?style=for-the-badge&logo=express&logoColor=white"> <img src="https://img.shields.io/badge/mysql-4479A1?style=for-the-badge&logo=mysql&logoColor=white">
