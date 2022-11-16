@@ -5,7 +5,7 @@ const createPost = async (postInfo) => {
   return post;
 };
 
-const findPosts = async (offset, limit, query) => {
+const findPosts = async (limit, offset, query) => {
   const posts = await Post.findAll({
     limit: limit,
     offset: offset,
@@ -13,16 +13,13 @@ const findPosts = async (offset, limit, query) => {
       {
         model: Tag,
         attributes: ['id', 'tag'],
-        as: 'tag',
         where: query.tagWhere,
         through: {
           attributes: [],
         },
       },
     ],
-    having: query.tagHaving,
-    group: query.tagGroup,
-    subQuery: false,
+
     attributes: [
       'id',
       'title',
@@ -35,8 +32,11 @@ const findPosts = async (offset, limit, query) => {
       'postUserId',
       'createdAt',
     ],
+    having: query.tagHaving,
+    group: query.group,
+    subQuery: false,
     order: query.ordering,
-    where: query.seaching,
+    where: query.seaching || null,
   });
   return posts;
 };

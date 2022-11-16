@@ -37,7 +37,7 @@ const addPost = async (postInfo) => {
   // tag 확인 후 생성
   const newTagList = await Promise.all(
     tagList.map((ele) => {
-      const tag = ele.slice(1).toLowerCase();
+      const tag = ele.toLowerCase();
       return tagModel.findOrCreateTag(tag, user.id);
     })
   );
@@ -75,10 +75,11 @@ const getPosts = async (data) => {
     offset = limit * (page - 1);
   }
 
-  // 쿼리
+  // 쿼리 가져오기
   const query = getQuery(data);
 
-  const posts = await postModel.findPosts(offset, limit, query);
+  const posts = await postModel.findPosts(limit, offset, query);
+
   if (posts.length === 0) {
     return { message: errorCodes.canNotFindPost };
   }
