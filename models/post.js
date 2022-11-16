@@ -59,9 +59,8 @@ const destroyPost = async (id) => {
   return result;
 };
 
-const getWriter = async (post) => {
+const findWriter = async (post) => {
   const writer = await post.getUser({ raw: true });
-
   return writer;
 };
 
@@ -73,6 +72,16 @@ const incrementValue = async (id, value) => {
 const decrementValue = async (id) => {
   const post = await Post.increment({ like: -1 }, { where: { id } });
   return post;
+};
+
+const findIsLiker = async (id, userId, redis) => {
+  const liker = await redis.SISMEMBER(`liker: post${id}`, userId);
+  return liker;
+};
+
+const findLikers = async (id, redis) => {
+  const likers = await redis.SMEMBERS(`liker: post${id}`);
+  return likers;
 };
 
 const createLiker = async (id, userId, redis) => {
@@ -95,9 +104,11 @@ module.exports = {
   findPost,
   updatePost,
   destroyPost,
-  getWriter,
+  findWriter,
   incrementValue,
   decrementValue,
+  findLikers,
+  findIsLiker,
   createLiker,
   deleteLiker,
 };

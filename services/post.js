@@ -137,15 +137,15 @@ const setPost = async (id, userId, data) => {
   }
 
   // 작성자 정보 가져오기
-  const writer = await postModel.getWriter(post);
+  const writer = await postModel.findWriter(post);
 
   // 수정 요청한 유저가 해당 게시글 작성자와 일치하는지 확인
-  if (userId !== post.postUserId) {
+  if (userId !== writer.id) {
     throw new Error(errorCodes.NotMatchedUser);
   }
 
   // 비밀번호가 해당 게시글의 작성자 비밀번호와 일치하는지 확인
-  const hashedPassword = writer.id;
+  const hashedPassword = writer.password;
   const isCorrectedPassword = await bcrypt.compare(password, hashedPassword);
   if (!isCorrectedPassword) {
     throw new Error(errorCodes.notCorrectPassword);
@@ -177,10 +177,10 @@ const deletePost = async (deleteInfo) => {
   }
 
   // 작성자 정보 가져오기
-  const writer = await postModel.getWriter(post);
+  const writer = await postModel.findWriter(post);
 
   // 삭제 요청한 유저가 해당 게시글 작성자와 일치하는지 확인
-  if (userId !== post.postUserId) {
+  if (userId !== writer.id) {
     throw new Error(errorCodes.NotMatchedUser);
   }
 
@@ -200,6 +200,31 @@ const deletePost = async (deleteInfo) => {
   const result = { message: '탈퇴되었습니다.' };
 
   return result;
+};
+
+/**
+ * 게시글 likers 조회
+ * @author JKS <eksql0645@gmail.com>
+ * @function getLikers
+ * @param {String} id 게시글 id
+ * @param {String} userId 유저 id
+ * @param redis redis
+ * @returns {Object} likers 조회 결과
+ */
+const getLikers = async (id, redis) => {
+  // 게시글 확인
+  const post = await postModel.findPost(id);
+  if (!post) {
+    throw new Error(errorCodes.canNotFindPost);
+  }
+
+  const likers = await postModel.findLikers(id, redis);
+
+  if (!likers) {
+    throw new Error(errorCodes.isNotLiker);
+  }
+
+  return likers;
 };
 
 /**
@@ -224,8 +249,8 @@ const likePost = async (id, userId, redis) => {
     throw new Error(errorCodes.canNotFindUser);
   }
 
-  // 캐싱된 liker인지 확인
-  const isLiker = await redis.SISMEMBER(`liker: post${id}`, userId);
+  // 캐싱된 liker인지 확인. 1 or 0 리턴
+  const isLiker = await postModel.findIsLiker(id, userId, redis);
 
   if (isLiker) {
     throw new Error(errorCodes.isLiker);
@@ -268,8 +293,8 @@ const unlikePost = async (id, userId, redis) => {
     throw new Error(errorCodes.canNotFindUser);
   }
 
-  // 캐싱된 liker인지 확인
-  const isLiker = await redis.SISMEMBER(`liker: post${id}`, userId);
+  // 캐싱된 liker인지 확인. 1 or 0 리턴
+  const isLiker = await postModel.findIsLiker(id, userId, redis);
 
   if (!isLiker) {
     throw new Error(errorCodes.isNotLiker);
@@ -319,6 +344,7 @@ module.exports = {
   getPost,
   setPost,
   deletePost,
+  getLikers,
   likePost,
   unlikePost,
   translatePost,
