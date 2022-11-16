@@ -14,21 +14,21 @@ const weatherAPI = require('../utils/weather');
 const errorCodes = require('../utils/errorCodes');
 const postRouter = Router();
 
+// 게시글 생성
 postRouter.post(
   '/',
   loginRequired,
   addPostValidator(),
   async (req, res, next) => {
     try {
-      const { title, content, image, tag } = req.body;
+      const { title, content, tag, url } = req.body;
       const userId = req.currentUserId;
       const weather = await weatherAPI();
-
       const postInfo = {
         id: nanoid(),
         title,
         content,
-        image,
+        image: url,
         weather,
         postUserId: userId,
         tag,
@@ -45,6 +45,7 @@ postRouter.post(
   }
 );
 
+// 게시글 전체 조회
 postRouter.get('/', getPostsValidator(), async (req, res, next) => {
   try {
     const posts = await postService.getPosts(req.query);
@@ -54,6 +55,7 @@ postRouter.get('/', getPostsValidator(), async (req, res, next) => {
   }
 });
 
+// 게시글 조회
 postRouter.get('/:id', isLogined, paramValidator(), async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -66,6 +68,7 @@ postRouter.get('/:id', isLogined, paramValidator(), async (req, res, next) => {
   }
 });
 
+// 게시글 수정
 postRouter.patch(
   '/:id',
   loginRequired,
@@ -82,6 +85,7 @@ postRouter.patch(
   }
 );
 
+// 게시글 삭제
 postRouter.delete(
   '/:id',
   loginRequired,
@@ -101,6 +105,7 @@ postRouter.delete(
   }
 );
 
+// 게시글 좋아요
 postRouter.post(
   '/:id/liker',
   loginRequired,
@@ -118,6 +123,7 @@ postRouter.post(
   }
 );
 
+// 게시글 좋아요 취소
 postRouter.delete(
   '/:id/liker',
   loginRequired,
@@ -126,13 +132,23 @@ postRouter.delete(
     try {
       const { id } = req.params;
       const userId = req.currentUserId;
-      const redis = req.app.get('redis');
-      const result = await postService.unlikePost(id, userId, redis);
+      const result = await postService.unlikePost(id, userId);
       res.status(201).json(result);
     } catch (err) {
       next(err);
     }
   }
 );
+
+// 번역
+postRouter.get('/:id/translation', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const post = await postService.translatePost(id);
+    res.status(200).json(post);
+  } catch (err) {
+    next(err);
+  }
+});
 
 module.exports = postRouter;

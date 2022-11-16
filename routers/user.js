@@ -92,14 +92,15 @@ userRouter.delete(
 userRouter.post('/:email/temp-password', async (req, res, next) => {
   try {
     const { email } = req.params;
-
-    const result = await userService.sendTempPasswordMail(email);
+    const redis = req.app.get('redis');
+    const result = await userService.sendTempPasswordMail(redis, email);
     res.status(201).json(result);
   } catch (err) {
     next(err);
   }
 });
 
+/** 
 // 탈퇴 회원 확인
 userRouter.get('/deleted-user', async (req, res, next) => {
   try {
@@ -126,4 +127,5 @@ userRouter.post('/deleted-user/:email', async (req, res, next) => {
     next(err);
   }
 });
+*/
 module.exports = userRouter;

@@ -18,21 +18,21 @@ const nodemailer = require('../utils/nodemailer');
 const addUser = async (redis, userInfo) => {
   const { email, password } = userInfo;
 
+  /**  복구 기능 미완성으로 주석처리
   // 기존에 가입한 이력이 있는지 확인
   const deletedUser = await redis.json.get(`deletedUser: ${email}`);
   if (deletedUser) {
     throw new Error(errorCodes.FindDeletedUser);
   }
+  */
 
-  // 인증된 이메일로 중복 회원 확인
-  const exsitedEmail = await redis.HGET('authComplete', email);
-  if (!exsitedEmail) {
-    throw new Error(errorCodes.alreadySignUpEmail);
-  }
+  // 임시 인증 상태 확인
+  const isAuthCompleted = await redis
+    .multi()
+    .get(`tempAuthStatus: ${email}`)
+    .exec();
 
-  // 임시 인증 완료 상태 확인
-  const isAuthCompleted = await redis.get(`authNumber: ${email}`);
-  if (!isAuthCompleted) {
+  if (!isAuthCompleted[0]) {
     throw new Error(errorCodes.unAuthUser);
   }
 
@@ -45,14 +45,11 @@ const addUser = async (redis, userInfo) => {
   const user = await userModel.createUser(userInfo);
 
   // 인증 완료 상태 저장
-  await redis.HSET('authComplete', email, 1);
-  const result = await redis.HGET('authComplete', email);
-  if (!result) {
-    throw new Error(errorCodes.failedSaveAuthStatus);
-  }
-
-  // 임시 데이터 삭제
-  await redis.del(`authNumber: ${email}`);
+  await redis
+    .multi()
+    .HSET('authComplete', email, 1)
+    .del(`tempAuthStatus: ${email}`)
+    .exec();
 
   user.password = null;
 
@@ -146,17 +143,14 @@ const setUser = async (redis, updateInfo) => {
   // 기존 이메일
   const preEmail = user.email;
 
-  // 새 이메일 인증상태 / 중복 확인
+  // 새 이메일 인증상태 확인
   if (email) {
-    // 인증된 이메일 = 가입된 유저의 이메일 -> 새 이메일 중복 확인
-    const exsitedEmail = await redis.HGET('authComplete', email);
-    if (!exsitedEmail) {
-      throw new Error(errorCodes.alreadySignUpEmail);
-    }
+    const isAuthCompleted = await redis
+      .multi()
+      .get(`tempAuthStatus: ${email}`)
+      .exec();
 
-    // 임시 인증 완료 상태 확인
-    const isAuthCompleted = await redis.get(`authNumber: ${email}`);
-    if (!isAuthCompleted) {
+    if (!isAuthCompleted[0]) {
       throw new Error(errorCodes.unAuthUser);
     }
   }
@@ -184,20 +178,13 @@ const setUser = async (redis, updateInfo) => {
     throw new Error(errorCodes.notUpdate);
   }
 
-  // 수정 후 새 이메일 인증 상태 저장
   if (email) {
-    // 기존 이메일 상태 데이터 삭제
-    await redis.HDEL('authComplete', preEmail);
-
-    // 새 이메일 인증 완료 상태 저장
-    await redis.HSET('authComplete', email, 1);
-    const result = await redis.HGET('authComplete', email);
-    if (!result) {
-      throw new Error(errorCodes.failedSaveAuthStatus);
-    }
-
-    // 임시 데이터 삭제
-    await redis.del(`authNumber: ${email}`);
+    await redis
+      .multi()
+      .HDEL('authComplete', preEmail) // 기존 이메일 상태 데이터 삭제
+      .HSET('authComplete', email, 1) // 새 이메일 인증 완료 상태 저장
+      .del(`tempAuthStatus: ${email}`) // 임시 데이터 삭제
+      .exec();
   }
 
   return { message: '수정되었습니다.' };
@@ -231,27 +218,25 @@ const deleteUser = async (userId, redis, currentPassword) => {
     throw new Error(errorCodes.serverError);
   }
 
-  // 레디스에 저장된 인증정보 / refreshToken 삭제
-  await redis.HDEL('authComplete', user.email);
-  await redis.HDEL('refreshToken', user.id);
+  let result = await redis
+    .multi()
+    .HDEL('authComplete', user.email) // 레디스에 저장된 인증정보 삭제
+    .HDEL('refreshToken', user.id) // refreshToken 삭제
+    .set(`deletedUser: ${user.email}`, user) // 탈퇴 유저 레디스에 저장
+    .expire(`deletedUser: ${user.email}`, 1296000) // 30일 경과하면 삭제
+    .exec();
 
-  // 삭제 유저 레디스에 저장
-  await redis.json.set(`deletedUser: ${user.email}`, '$', user);
-
-  // 30일 경과하면 삭제
-  await redis.expire(`deletedUser: ${user.email}`, 1296000);
-
-  const result = { message: '탈퇴되었습니다.' };
+  result = { message: '탈퇴되었습니다.' };
 
   return result;
 };
 
 // 임시 비밀번호 전송
-const sendTempPasswordMail = async (email) => {
-  // 이메일 확인
-  let user = await userModel.findUserByEmail(email);
-  if (!user) {
-    throw new Error(errorCodes.canNotFindUser);
+const sendTempPasswordMail = async (redis, email) => {
+  // 인증된 이메일로 중복 회원 확인
+  const exsitedEmail = await redis.HGET('authComplete', email);
+  if (exsitedEmail) {
+    throw new Error(errorCodes.alreadySignUpEmail);
   }
 
   // 임시 비밀번호 생성
@@ -285,6 +270,7 @@ const sendTempPasswordMail = async (email) => {
   return result;
 };
 
+/** 
 // 탈퇴 회원 확인
 const checkDeletedUser = async (redis, email) => {
   const deletedUser = await redis.json.get(`deletedUser: ${email}`);
@@ -293,6 +279,7 @@ const checkDeletedUser = async (redis, email) => {
   }
   return { message: `${deletedUser.email}은 복구 가능한 계정입니다.` };
 };
+
 
 // 회원 복구
 const reCreateUser = async (redis, email, password) => {
@@ -308,14 +295,14 @@ const reCreateUser = async (redis, email, password) => {
     throw new Error(errorCodes.notCorrectPassword);
   }
 
-  // 기존 데이터 다시 생성
+  // 인증 데이터 및 기존 데이터 다시 생성
   const restoredUser = await userModel.createUser(deletedUser);
 
   restoredUser.password = null;
 
   return deletedUser;
 };
-
+*/
 module.exports = {
   addUser,
   getToken,
@@ -323,6 +310,6 @@ module.exports = {
   setUser,
   deleteUser,
   sendTempPasswordMail,
-  checkDeletedUser,
-  reCreateUser,
+  // checkDeletedUser,
+  // reCreateUser,
 };

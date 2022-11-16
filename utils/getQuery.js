@@ -1,5 +1,5 @@
 const { Op, Sequelize } = require('sequelize');
-const { User } = require('../db');
+
 /**
  * 쿼리 생성
  * @author JKS <eksql0645@gmail.com>
@@ -51,15 +51,15 @@ const getQuery = (data) => {
 
   // 태그 조회
   if (tag) {
-    let tagList = tag.split(',');
+    let tagList = tag.trim().split(',');
     tagList = tagList.map((tag) => {
       return `#${tag}`;
     });
     query.tagWhere = { tag: { [Op.in]: tagList } };
     query.tagHaving = Sequelize.literal(
-      `COUNT(DISTINCT tag.tag) = ${tagList.length}`
+      `COUNT(DISTINCT Tags.tag) = ${tagList.length}`
     );
-    query.tagGroup = ['id'];
+    query.group = ['id'];
   }
 
   // 제목 검색
