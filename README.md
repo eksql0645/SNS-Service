@@ -39,7 +39,7 @@
 
 [AWS S3를 적용한 이미지 업로드 기능 구현 과정](https://k2eo.tistory.com/26)
 
-[다중 태그 검색 기능 구현하기](https://k2eo.tistory.com/29)
+[다중 태그 검색 기능 구현 과정](https://k2eo.tistory.com/29)
 
 [nodemailer를 사용한 이메일 인증 구현 과정](https://k2eo.tistory.com/24)
 
