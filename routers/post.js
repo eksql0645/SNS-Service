@@ -105,9 +105,21 @@ postRouter.delete(
   }
 );
 
+// 게시글 likers 조회
+postRouter.get('/:id/likers', paramValidator(), async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const redis = req.app.get('redis');
+    const likers = await postService.getLikers(id, redis);
+    res.status(201).json(likers);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // 게시글 좋아요
 postRouter.post(
-  '/:id/liker',
+  '/:id/likers',
   loginRequired,
   paramValidator(),
   async (req, res, next) => {
@@ -125,7 +137,7 @@ postRouter.post(
 
 // 게시글 좋아요 취소
 postRouter.delete(
-  '/:id/liker',
+  '/:id/likers',
   loginRequired,
   paramValidator(),
   async (req, res, next) => {
