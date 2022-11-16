@@ -30,6 +30,8 @@
     - 페이지 당 10, 30, 50, 70건의 페이지네이션을 제공합니다. 
   
   - openAPI를 적용하여 **날씨데이터, 언어감지, 번역 기능**을 제공합니다.
+  
+  - **이미지 첨부**가 가능합니다.
 
 ## ISSUE 해결 과정
 
@@ -42,11 +44,8 @@
 ## ERD
 ![image](https://user-images.githubusercontent.com/80232260/199373748-4fd1317f-05c6-4bd4-b727-563de49a1fe9.png)
 
-## API 문서
-추가 예정
-
-## 컨벤션
-[Wiki]()를 참고하세요.
+## API 문서 / 컨벤션
+[Wiki](https://github.com/eksql0645/SNS-Service/wiki)를 참고하세요.
 
 ## 기술 스택
 <img src="https://img.shields.io/badge/node.js-339933?style=for-the-badge&logo=Node.js&logoColor=white"> <img src="https://img.shields.io/badge/express-FCC624?style=for-the-badge&logo=express&logoColor=white"> <img src="https://img.shields.io/badge/mysql-4479A1?style=for-the-badge&logo=mysql&logoColor=white">
