@@ -38,6 +38,7 @@ module.exports = {
   notMatchedPost: '게시글이 일치하지 않습니다.',
   // COMMENT
   canNotFindComment: '댓글을 찾을 수 없습니다.',
+  notMatchedUser: '일치하지 않는 회원입니다.',
   //LIKER
   failedApplyLike: '좋아요 수가 게시글 DB에 반영되지 않았습니다.',
   failedApplyUnLike: '좋아요 취소가 게시글 DB에 반영되지 않았습니다.',

@@ -164,11 +164,12 @@ postRouter.get('/:id/translation', async (req, res, next) => {
 });
 
 // 게시글 댓글 생성
-postRouter.post('/:id/comment', async (req, res, next) => {
+postRouter.post('/:id/comment', loginRequired, async (req, res, next) => {
   try {
     const postId = req.params.id;
+    const comUserId = req.currentUserId;
     const { comment } = req.body;
-    const commentInfo = { postId, comment };
+    const commentInfo = { postId, comUserId, comment };
     const newComment = await commentService.addComment(commentInfo);
     res.status(201).json(newComment);
   } catch (err) {
@@ -177,18 +178,23 @@ postRouter.post('/:id/comment', async (req, res, next) => {
 });
 
 // 게시글 대댓글 생성
-postRouter.post('/:id/:commentid/reply', async (req, res, next) => {
-  try {
-    const postId = req.params.id;
-    const commentId = req.params.commentid;
-    const { comment } = req.body;
-    const replyInfo = { postId, commentId, comment };
-    const reply = await commentService.addReply(replyInfo);
-    res.status(201).json(reply);
-  } catch (err) {
-    next(err);
+postRouter.post(
+  '/:id/:commentid/reply',
+  loginRequired,
+  async (req, res, next) => {
+    try {
+      const postId = req.params.id;
+      const comUserId = req.currentUserId;
+      const commentId = req.params.commentid;
+      const { comment } = req.body;
+      const replyInfo = { postId, comUserId, commentId, comment };
+      const reply = await commentService.addReply(replyInfo);
+      res.status(201).json(reply);
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 // 게시글 댓글 전체 조회
 postRouter.get('/:id/comments', async (req, res, next) => {
@@ -202,12 +208,13 @@ postRouter.get('/:id/comments', async (req, res, next) => {
 });
 
 // 게시글 댓글 수정
-postRouter.patch('/:id/:commentid', async (req, res, next) => {
+postRouter.patch('/:id/:commentid', loginRequired, async (req, res, next) => {
   try {
     const postId = req.params.id;
+    const comUserId = req.currentUserId;
     const commentId = req.params.commentid;
     const { comment } = req.body;
-    const updateInfo = { postId, commentId, comment };
+    const updateInfo = { postId, commentId, comUserId, comment };
     const result = await commentService.setComment(updateInfo);
     res.status(200).json(result);
   } catch (err) {
@@ -216,11 +223,12 @@ postRouter.patch('/:id/:commentid', async (req, res, next) => {
 });
 
 // 게시글 댓글 삭제
-postRouter.delete('/:id/:commentid', async (req, res, next) => {
+postRouter.delete('/:id/:commentid', loginRequired, async (req, res, next) => {
   try {
     const postId = req.params.id;
+    const comUserId = req.currentUserId;
     const commentId = req.params.commentid;
-    const deleteInfo = { postId, commentId };
+    const deleteInfo = { postId, commentId, comUserId };
     const result = await commentService.deleteComment(deleteInfo);
     res.status(200).json(result);
   } catch (err) {
