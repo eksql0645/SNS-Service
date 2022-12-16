@@ -55,7 +55,13 @@ const addPost = async (postInfo) => {
  * 게시글 전체조회
  * @author JKS <eksql0645@gmail.com>
  * @function getPosts
- * @param {Object} data req.query
+ * @param {Object} data 게시글 조회 조건
+ * @param {String} data.page 페이지 수
+ * @param {String} data.limit 페이지 당 갯수 제한
+ * @param {String} data.sort 정렬 기준 (생성일, 좋아요 수, 조회수)
+ * @param {String} data.seq 내림차순, 오름차순 정렬
+ * @param {String} data.search 게시글 타이틀 검색 키워드
+ * @param {String} data.tag 태그 검색 키워드
  * @returns {Array} 조회된 post 객체들이 담긴 배열
  */
 const getPosts = async (data) => {
@@ -111,7 +117,7 @@ const getPost = async (id, userId, redis) => {
 
   // 해당 유저가 게시글에 좋아요한 유저인지 확인: T/F 반환
   if (userId) {
-    const isLiker = await redis.SISMEMBER(`liker: post${id}`, userId);
+    const isLiker = await postModel.findLiker(id, userId, redis);
     post.dataValues.isLiker = isLiker;
   }
 
@@ -122,6 +128,10 @@ const getPost = async (id, userId, redis) => {
  * 게시글 수정
  * @author JKS <eksql0645@gmail.com>
  * @function setPost
+ * @param {Object} data 게시글 수정 시 필요 정보
+ * @param {String} data.title 게시글 제목
+ * @param {String} data.content 게시글 내용
+ * @param {String} data.password 작성자 비밀번호
  * @param {String} id 게시글 id
  * @param {String} userId 유저 id
  * @returns {Array} 수정 결과 [1] or [0] 반환
@@ -160,10 +170,11 @@ const setPost = async (id, userId, data) => {
  * 게시글 삭제
  * @author JKS <eksql0645@gmail.com>
  * @function deletePost
- * @param {String} id 게시글 id
- * @param {String} userId 유저 id
- * @param {String} password 비밀번호
- * @param redis 레디스
+ * @param {Object} deleteInfo 삭제 시 필요 정보
+ * @param {String} deleteInfo.id 게시글 id
+ * @param {String} deleteInfo.userId 유저 id
+ * @param {String} deleteInfo.password 비밀번호
+ * @param deleteInfo.redis 레디스
  * @returns {Object} 삭제 확인 메세지
  */
 const deletePost = async (deleteInfo) => {
@@ -197,6 +208,10 @@ const deletePost = async (deleteInfo) => {
     throw new Error(errorCodes.serverError);
   }
 
+  // 이미지가 있다면 S3에서 삭제
+  // if (post.image) {
+  // }
+
   const result = { message: '탈퇴되었습니다.' };
 
   return result;
@@ -207,9 +222,8 @@ const deletePost = async (deleteInfo) => {
  * @author JKS <eksql0645@gmail.com>
  * @function getLikers
  * @param {String} id 게시글 id
- * @param {String} userId 유저 id
  * @param redis redis
- * @returns {Object} likers 조회 결과
+ * @returns {Array} 해당 게시글에 좋아요한 유저 목록
  */
 const getLikers = async (id, redis) => {
   // 게시글 확인
@@ -220,10 +234,9 @@ const getLikers = async (id, redis) => {
 
   const likers = await postModel.findLikers(id, redis);
 
-  if (!likers) {
-    throw new Error(errorCodes.isNotLiker);
+  if (likers.length === 0) {
+    return { message: errorCodes.canNotFindLikers };
   }
-
   return likers;
 };
 
@@ -250,23 +263,23 @@ const likePost = async (id, userId, redis) => {
   }
 
   // 캐싱된 liker인지 확인. 1 or 0 리턴
-  const isLiker = await postModel.findIsLiker(id, userId, redis);
+  const isLiker = await postModel.findLiker(id, userId, redis);
 
   if (isLiker) {
-    throw new Error(errorCodes.isLiker);
+    throw new Error(errorCodes.alreadyLiker);
   }
 
-  // redis에 liker 캐싱: [1,1] or [0,0] 반환
+  // redis에 liker 캐싱
   const result = await postModel.createLiker(id, userId, redis);
 
   // 좋아요 수 증가
-  if (result[0] === 1 && result[1] === 1) {
+  if (result) {
     const isIncreased = await postModel.incrementValue(id, { like: 1 });
     if (!isIncreased[0][1]) {
-      throw new Error(errorCodes.canNotApplyLike);
+      throw new Error(errorCodes.failedApplyLike);
     }
   } else {
-    throw new Error(errorCodes.canNotApplyLike);
+    throw new Error(errorCodes.failedCreateLiker);
   }
   return result;
 };
@@ -294,24 +307,24 @@ const unlikePost = async (id, userId, redis) => {
   }
 
   // 캐싱된 liker인지 확인. 1 or 0 리턴
-  const isLiker = await postModel.findIsLiker(id, userId, redis);
+  const isLiker = await postModel.findLiker(id, userId, redis);
 
   if (!isLiker) {
     throw new Error(errorCodes.isNotLiker);
   }
 
-  // 캐싱된 liker 삭제: [1,1] or [0,0] 반환
+  // 캐싱된 liker 삭제
   const result = await postModel.deleteLiker(id, userId, redis);
 
   // 좋아요 수 감소
-  if (result[0] === 1 && result[1] === 1) {
+  if (result) {
     const isDecreased = await postModel.decrementValue(id);
-    console.log(isDecreased);
+
     if (!isDecreased[0][1]) {
-      throw new Error(errorCodes.canNotApplyLike);
+      throw new Error(errorCodes.failedApplyUnLike);
     }
   } else {
-    throw new Error(errorCodes.canNotApplyLike);
+    throw new Error(errorCodes.failedDeleteLiker);
   }
   return result;
 };
@@ -321,7 +334,7 @@ const unlikePost = async (id, userId, redis) => {
  * @author JKS <eksql0645@gmail.com>
  * @function translatePost
  * @param {String} id 게시글 id
- * @returns {Object} 번역된 게시글 내용
+ * @returns {String} 번역된 게시글 내용
  */
 const translatePost = async (id) => {
   let post = await postModel.findPost(id);

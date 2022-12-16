@@ -8,20 +8,18 @@ module.exports = {
   multerError: '업로드 파일의 형식이 지원하지 않는 형식입니다.',
   // USER
   canNotFindUser: '존재하지 않는 회원입니다.',
+  alreadySignUpEmail: '이미 가입된 이메일입니다.',
+  notCorrectPassword: '비밀번호가 일치하지 않습니다.',
+  failedSignUp: '회원가입 중 문제가 생겼습니다. 다시 시도해주세요.',
+  failedDeleteAuthUser: '인증 완료된 회원 삭제에 실패했습니다.',
+  failedSaveDeletedUser: '탈퇴 회원 저장에 실패했습니다.',
   canNotFindDeletedUser:
     '입력한 계정이 올바르지 않거나, 이미 유예기간이 지나 복구가 불가능한 계정입니다.',
   FindDeletedUser:
     '탈퇴한지 30일이 지나지 않은 계정입니다. 계정을 복구해주세요.',
-  alreadySignUpEmail: '이미 가입된 이메일입니다.',
-  notCorrectPassword: '비밀번호가 일치하지 않습니다.',
-  failedSignUp: '회원가입 중 문제가 생겼습니다. 다시 시도해주세요.',
-  isNotLiker: '좋아요를 눌러야 취소가 가능합니다.',
-  isLiker: '이미 해당 게시글에 좋아요를 눌렀습니다.',
-  failedDeleteAuthUser: '인증 완료된 회원 삭제에 실패했습니다.',
-  failedSaveDeletedUser: '탈퇴 회원 저장에 실패했습니다.',
   // AUTH
   failedSendEmail: '이메일 전송에 실패했습니다.',
-  failedSaveAuthNumber: '발급된 authNumber가 저장되지 않았습니다.',
+  failedSaveAuthNumber: '발급된 인증번호가 저장되지 않았습니다.',
   notGetReadyMailServer: '메일 서버가 준비되지 않았습니다.',
   reissuedAuth: '인증번호 재발급이 필요합니다.',
   failedAuth: '인증번호가 일치하지 않습니다.',
@@ -32,13 +30,19 @@ module.exports = {
   // POST
   canNotFindPost: '게시글이 존재하지 않습니다.',
   canNotCreatePost: '게시글이 생성되지 않았습니다.',
-  canNotApplyLike: '좋아요 수가 반영되지 않았습니다.',
   NotMatchedUser: '게시글 작성자가 아닙니다.',
   failedUpdated: '게시글 수정 중 문제가 생겼습니다. 다시 시도해주세요.',
   tooLongContent: '내용은 200자까지 작성 가능합니다.',
   tooLongTitle: '제목은 60자까지 작성 가능합니다.',
   notDuplicated: '중복된 내용의 태그는 하나만 적용 가능합니다.',
-
+  //LIKER
+  failedApplyLike: '좋아요 수가 게시글 DB에 반영되지 않았습니다.',
+  failedApplyUnLike: '좋아요 취소가 게시글 DB에 반영되지 않았습니다.',
+  failedCreateLiker: '좋아요를 누른 유저가 목록에 추가되지 않았습니다.',
+  failedDeleteLiker: '좋아요를 취소한 유저가 목록에서 삭제되지 않았습니다.',
+  isNotLiker: '좋아요를 누른 유저만 취소가 가능합니다.',
+  canNotFindLikers: '해당 게시글의 좋아요한 유저가 없습니다.',
+  alreadyLiker: '이미 해당 게시글에 좋아요를 눌렀습니다.',
   // validator
   required: '필수 값입니다.',
   wrongFormat: '형식을 맞춰주세요.',

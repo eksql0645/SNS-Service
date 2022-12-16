@@ -8,7 +8,7 @@ const { Op, Sequelize } = require('sequelize');
  * @returns {Object} 조건에 따라 생성된 query 객체
  */
 const getQuery = (data) => {
-  let { sort, seq, seach, tag } = data;
+  let { sort, seq, search, tag } = data;
 
   seq = parseInt(seq);
   sort = parseInt(sort);
@@ -63,10 +63,10 @@ const getQuery = (data) => {
   }
 
   // 제목 검색
-  if (seach) {
+  if (search) {
     query.seaching = {
       title: {
-        [Op.like]: `%${seach}%`,
+        [Op.like]: `%${search}%`,
       },
     };
   }
