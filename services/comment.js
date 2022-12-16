@@ -19,13 +19,13 @@ const addComment = async (commentInfo) => {
   }
 
   // 해당 게시글에 대한 댓글 확인
-  const commentInPost = await post.getComments({ raw: true });
+  const comments = await postModel.findComments(post);
 
   // 댓글이 없다면 group은 1, 있다면 마지막 댓글 group+1
-  if (commentInPost.length === 0) {
+  if (comments.length === 0) {
     commentInfo.group = 1;
   } else {
-    commentInfo.group = commentInPost[commentInPost.length - 1].group + 1;
+    commentInfo.group = comments[comments.length - 1].group + 1;
   }
 
   const newComment = await commentModel.createComment(commentInfo);
@@ -70,12 +70,22 @@ const addReply = async (replyInfo) => {
   return reply;
 };
 
+/**
+ * 게시글 댓글 전체 조회
+ * @author JKS <eksql0645@gmail.com>
+ * @function addReply
+ * @param {String} postId 게시글 id
+ * @returns {Array} 게시글의 전체 댓글
+ */
 const getComments = async (postId) => {
   const post = await postModel.findPost(postId);
 
   if (!post) {
     throw new Error(errorCodes.canNotFindPost);
   }
+
+  const comments = await postModel.findComments(post);
+  return comments;
 };
 
 const setComment = async () => {};

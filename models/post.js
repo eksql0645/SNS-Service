@@ -94,6 +94,11 @@ const deleteLiker = async (id, userId, redis) => {
   return result;
 };
 
+const findComments = async (post) => {
+  const comments = await post.getComments({ raw: true });
+  return comments;
+};
+
 module.exports = {
   createPost,
   findPosts,
@@ -107,4 +112,5 @@ module.exports = {
   findLiker,
   createLiker,
   deleteLiker,
+  findComments,
 };

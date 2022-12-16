@@ -194,8 +194,8 @@ postRouter.post('/:id/:commentid/reply', async (req, res, next) => {
 postRouter.get('/:id/comments', async (req, res, next) => {
   try {
     const postId = req.params.id;
-    const comment = await commentService.getComments(postId);
-    res.status(201).json(comment);
+    const comments = await commentService.getComments(postId);
+    res.status(200).json(comments);
   } catch (err) {
     next(err);
   }
@@ -207,7 +207,7 @@ postRouter.patch('/:id/:commentid', async (req, res, next) => {
     const postId = req.params.id;
     const commentId = req.params.commentid;
     const comment = await commentService.setComment(postId, commentId);
-    res.status(201).json(comment);
+    res.status(200).json(comment);
   } catch (err) {
     next(err);
   }
@@ -219,7 +219,7 @@ postRouter.delete('/:id/:commentid', async (req, res, next) => {
     const postId = req.params.id;
     const commentId = req.params.commentid;
     const comment = await commentService.deleteComment(postId, commentId);
-    res.status(201).json(comment);
+    res.status(200).json(comment);
   } catch (err) {
     next(err);
   }

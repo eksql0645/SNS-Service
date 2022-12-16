@@ -9,14 +9,13 @@ const findComment = async (id) => {
   const comment = await Comment.findOne({ where: { id } });
   return comment;
 };
-const findComments = async () => {};
+
 const updateComment = async () => {};
 const destroyComment = async () => {};
 
 module.exports = {
   createComment,
   findComment,
-  findComments,
   updateComment,
   destroyComment,
 };
