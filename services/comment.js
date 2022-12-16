@@ -92,7 +92,10 @@ const getComments = async (postId) => {
  * 댓글 수정
  * @author JKS <eksql0645@gmail.com>
  * @function setComment
- * @param {String} postId 게시글 id
+ * @param {Object} updateInfo 수정 정보
+ * @param {String} updateInfo.postId 게시글 id
+ * @param {String} updateInfo.commentId 댓글 id
+ * @param {String} updateInfo.comment 수정 내용
  * @returns {Array} 댓글 내용 수정 결과
  */
 const setComment = async (updateInfo) => {
@@ -113,6 +116,15 @@ const setComment = async (updateInfo) => {
   return reuslt;
 };
 
+/**
+ * 댓글 삭제
+ * @author JKS <eksql0645@gmail.com>
+ * @function deleteComment
+ * @param {Object} deleteInfo 삭제 정보
+ * @param {String} deleteInfo.postId 게시글 id
+ * @param {String} deleteInfo.commentId 댓글 id
+ * @returns {Number} 댓글 삭제 결과
+ */
 const deleteComment = async (deleteInfo) => {
   const { postId, commentId } = deleteInfo;
 
