@@ -36,12 +36,12 @@ async function checkExpiredToken(userToken, refreshToken, redis) {
     }
     // accessToken만 만료된 경우, accessToken 재발급 후 프론트로 응답
     const newAccessToken = accessToken(accessTokenResult.userId);
-    const token = {
+    const tokens = {
       accessToken: newAccessToken,
       refreshToken,
     };
 
-    return token;
+    return tokens;
   }
   throw new Error(errorCodes.availableToken);
 }
