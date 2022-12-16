@@ -95,8 +95,8 @@ const getComments = async (postId) => {
  * @param {String} postId 게시글 id
  * @returns {Array} 댓글 내용 수정 결과
  */
-const setComment = async (commentInfo) => {
-  const { postId, commentId } = commentInfo;
+const setComment = async (updateInfo) => {
+  const { postId, commentId } = updateInfo;
 
   const post = await postModel.findPost(postId);
   if (!post) {
@@ -108,12 +108,28 @@ const setComment = async (commentInfo) => {
     throw new Error(errorCodes.canNotFindComment);
   }
 
-  const reuslt = await commentModel.updateComment(commentInfo);
+  const reuslt = await commentModel.updateComment(updateInfo);
 
   return reuslt;
 };
 
-const deleteComment = async () => {};
+const deleteComment = async (deleteInfo) => {
+  const { postId, commentId } = deleteInfo;
+
+  const post = await postModel.findPost(postId);
+  if (!post) {
+    throw new Error(errorCodes.canNotFindPost);
+  }
+
+  const comment = await commentModel.findComment(commentId);
+  if (!comment) {
+    throw new Error(errorCodes.canNotFindComment);
+  }
+
+  const reuslt = await commentModel.destroyComment(commentId);
+
+  return reuslt;
+};
 
 module.exports = {
   addComment,

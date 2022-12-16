@@ -10,14 +10,18 @@ const findComment = async (id) => {
   return comment;
 };
 
-const updateComment = async (commentInfo) => {
+const updateComment = async (updateInfo) => {
   const reuslt = await Comment.update(
-    { comment: commentInfo.comment },
-    { where: { id: commentInfo.commentId } }
+    { comment: updateInfo.comment },
+    { where: { id: updateInfo.commentId } }
   );
   return reuslt;
 };
-const destroyComment = async () => {};
+
+const destroyComment = async (commentId) => {
+  const result = await Comment.destroy({ where: { id: commentId } });
+  return result;
+};
 
 module.exports = {
   createComment,

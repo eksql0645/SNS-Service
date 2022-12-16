@@ -207,8 +207,8 @@ postRouter.patch('/:id/:commentid', async (req, res, next) => {
     const postId = req.params.id;
     const commentId = req.params.commentid;
     const { comment } = req.body;
-    const commentInfo = { postId, commentId, comment };
-    const result = await commentService.setComment(commentInfo);
+    const updateInfo = { postId, commentId, comment };
+    const result = await commentService.setComment(updateInfo);
     res.status(200).json(result);
   } catch (err) {
     next(err);
@@ -220,8 +220,9 @@ postRouter.delete('/:id/:commentid', async (req, res, next) => {
   try {
     const postId = req.params.id;
     const commentId = req.params.commentid;
-    const comment = await commentService.deleteComment(postId, commentId);
-    res.status(200).json(comment);
+    const deleteInfo = { postId, commentId };
+    const result = await commentService.deleteComment(deleteInfo);
+    res.status(200).json(result);
   } catch (err) {
     next(err);
   }
