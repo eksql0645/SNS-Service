@@ -32,7 +32,42 @@ const addComment = async (commentInfo) => {
 
   return newComment;
 };
-const addReply = async () => {};
+
+/**
+ * 대댓글 생성
+ * @author JKS <eksql0645@gmail.com>
+ * @function addReply
+ * @param {Object} replyInfo reply 생성 시 필요한 정보
+ * @param {String} replyInfo.postId 게시글 id
+ * @param {String} replyInfo.commentId 댓글 id
+ * @param {String} replyInfo.comment 대댓글 내용
+ * @returns {Object} 생성된 reply 객체
+ */
+const addReply = async (replyInfo) => {
+  const { postId, commentId } = replyInfo;
+
+  const post = await postModel.findPost(postId);
+
+  if (!post) {
+    throw new Error(errorCodes.canNotFindPost);
+  }
+  if (post.id !== postId) {
+    throw new Error(errorCodes.notMatchedPost);
+  }
+
+  const parentComment = await commentModel.findComment(commentId);
+
+  if (!parentComment) {
+    throw new Error(errorCodes.canNotFindComment);
+  }
+
+  replyInfo.group = parentComment.group;
+  replyInfo.parentId = commentId;
+  console.log(replyInfo);
+  const reply = await commentModel.createComment(replyInfo);
+
+  return reply;
+};
 const getComments = async () => {};
 const setComment = async () => {};
 const deleteComment = async () => {};

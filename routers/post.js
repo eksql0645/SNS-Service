@@ -182,8 +182,8 @@ postRouter.post('/:id/:commentid/reply', async (req, res, next) => {
     const postId = req.params.id;
     const commentId = req.params.commentid;
     const { comment } = req.body;
-    const commentInfo = { postId, commentId, comment };
-    const reply = await commentService.addReply(commentInfo);
+    const replyInfo = { postId, commentId, comment };
+    const reply = await commentService.addReply(replyInfo);
     res.status(201).json(reply);
   } catch (err) {
     next(err);
