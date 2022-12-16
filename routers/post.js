@@ -206,8 +206,10 @@ postRouter.patch('/:id/:commentid', async (req, res, next) => {
   try {
     const postId = req.params.id;
     const commentId = req.params.commentid;
-    const comment = await commentService.setComment(postId, commentId);
-    res.status(200).json(comment);
+    const { comment } = req.body;
+    const commentInfo = { postId, commentId, comment };
+    const result = await commentService.setComment(commentInfo);
+    res.status(200).json(result);
   } catch (err) {
     next(err);
   }

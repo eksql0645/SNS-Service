@@ -10,7 +10,13 @@ const findComment = async (id) => {
   return comment;
 };
 
-const updateComment = async () => {};
+const updateComment = async (commentInfo) => {
+  const reuslt = await Comment.update(
+    { comment: commentInfo.comment },
+    { where: { id: commentInfo.commentId } }
+  );
+  return reuslt;
+};
 const destroyComment = async () => {};
 
 module.exports = {

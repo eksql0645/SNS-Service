@@ -88,7 +88,31 @@ const getComments = async (postId) => {
   return comments;
 };
 
-const setComment = async () => {};
+/**
+ * 댓글 수정
+ * @author JKS <eksql0645@gmail.com>
+ * @function setComment
+ * @param {String} postId 게시글 id
+ * @returns {Array} 댓글 내용 수정 결과
+ */
+const setComment = async (commentInfo) => {
+  const { postId, commentId } = commentInfo;
+
+  const post = await postModel.findPost(postId);
+  if (!post) {
+    throw new Error(errorCodes.canNotFindPost);
+  }
+
+  const comment = await commentModel.findComment(commentId);
+  if (!comment) {
+    throw new Error(errorCodes.canNotFindComment);
+  }
+
+  const reuslt = await commentModel.updateComment(commentInfo);
+
+  return reuslt;
+};
+
 const deleteComment = async () => {};
 
 module.exports = {
