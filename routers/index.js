@@ -5,10 +5,12 @@ const postRouter = require('./post');
 const authRouter = require('./auth');
 const refreshRouter = require('./refresh');
 const imageRouter = require('./image');
+const commentRouter = require('./comment');
 
 router.use('/users', userRouter);
-router.use('/tokens', refreshRouter);
 router.use('/posts', postRouter);
+router.use('/comments', commentRouter);
+router.use('/tokens', refreshRouter);
 router.use('/auth', authRouter);
 router.use('/img', imageRouter);
 
