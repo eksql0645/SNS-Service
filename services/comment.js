@@ -51,9 +51,6 @@ const addReply = async (replyInfo) => {
   if (!post) {
     throw new Error(errorCodes.canNotFindPost);
   }
-  if (post.id !== postId) {
-    throw new Error(errorCodes.notMatchedPost);
-  }
 
   const parentComment = await commentModel.findComment(commentId);
 
@@ -61,14 +58,26 @@ const addReply = async (replyInfo) => {
     throw new Error(errorCodes.canNotFindComment);
   }
 
+  if (post.id !== parentComment.postId) {
+    throw new Error(errorCodes.notMatchedPost);
+  }
+
   replyInfo.group = parentComment.group;
   replyInfo.parentId = commentId;
-  console.log(replyInfo);
+
   const reply = await commentModel.createComment(replyInfo);
 
   return reply;
 };
-const getComments = async () => {};
+
+const getComments = async (postId) => {
+  const post = await postModel.findPost(postId);
+
+  if (!post) {
+    throw new Error(errorCodes.canNotFindPost);
+  }
+};
+
 const setComment = async () => {};
 const deleteComment = async () => {};
 
