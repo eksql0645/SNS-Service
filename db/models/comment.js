@@ -8,6 +8,10 @@ module.exports = class Comment extends Sequelize.Model {
           type: Sequelize.INTEGER,
           allowNull: false,
         },
+        parentId: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+        },
         comment: {
           type: Sequelize.STRING(255),
           allowNull: false,
