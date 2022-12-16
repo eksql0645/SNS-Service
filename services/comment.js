@@ -32,14 +32,14 @@ const addComment = async (commentInfo) => {
 
   return newComment;
 };
-const getComment = async () => {};
+const addReply = async () => {};
 const getComments = async () => {};
 const setComment = async () => {};
 const deleteComment = async () => {};
 
 module.exports = {
   addComment,
-  getComment,
+  addReply,
   getComments,
   setComment,
   deleteComment,

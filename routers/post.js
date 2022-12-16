@@ -2,7 +2,7 @@ const { Router } = require('express');
 const { nanoid } = require('nanoid');
 const { loginRequired } = require('../middlewares/loginRequired');
 const { isLogined } = require('../middlewares/isLogined');
-const { postService } = require('../services');
+const { postService, commentService } = require('../services');
 const {
   addPostValidator,
   getPostsValidator,
@@ -158,6 +158,68 @@ postRouter.get('/:id/translation', async (req, res, next) => {
     const { id } = req.params;
     const post = await postService.translatePost(id);
     res.status(200).json(post);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 게시글 댓글 생성
+postRouter.post('/:id/comment', async (req, res, next) => {
+  try {
+    const postId = req.params.id;
+    const { comment } = req.body;
+    const commentInfo = { postId, comment };
+    const newComment = await commentService.addComment(commentInfo);
+    res.status(201).json(newComment);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 게시글 대댓글 생성
+postRouter.post('/:id/:commentid/reply', async (req, res, next) => {
+  try {
+    const postId = req.params.id;
+    const commentId = req.params.commentid;
+    const { comment } = req.body;
+    const commentInfo = { postId, commentId, comment };
+    const reply = await commentService.addReply(commentInfo);
+    res.status(201).json(reply);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 게시글 댓글 전체 조회
+postRouter.get('/:id/comments', async (req, res, next) => {
+  try {
+    const postId = req.params.id;
+    const comment = await commentService.getComments(postId);
+    res.status(201).json(comment);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 게시글 댓글 수정
+postRouter.patch('/:id/:commentid', async (req, res, next) => {
+  try {
+    const postId = req.params.id;
+    const commentId = req.params.commentid;
+    const comment = await commentService.setComment(postId, commentId);
+    res.status(201).json(comment);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 게시글 댓글 삭제
+postRouter.delete('/:id/:commentid', async (req, res, next) => {
+  try {
+    const postId = req.params.id;
+    const commentId = req.params.commentid;
+    const comment = await commentService.deleteComment(postId, commentId);
+    res.status(201).json(comment);
   } catch (err) {
     next(err);
   }
