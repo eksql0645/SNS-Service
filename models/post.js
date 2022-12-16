@@ -74,7 +74,7 @@ const decrementValue = async (id) => {
   return post;
 };
 
-const findIsLiker = async (id, userId, redis) => {
+const findLiker = async (id, userId, redis) => {
   const liker = await redis.SISMEMBER(`liker: post${id}`, userId);
   return liker;
 };
@@ -85,16 +85,12 @@ const findLikers = async (id, redis) => {
 };
 
 const createLiker = async (id, userId, redis) => {
-  const postResult = await redis.SADD(`liker: post${id}`, userId);
-  const userResult = await redis.SADD(`liker: user${id}`, userId);
-  const result = [postResult, userResult];
+  const result = await redis.SADD(`liker: post${id}`, userId);
   return result;
 };
 
 const deleteLiker = async (id, userId, redis) => {
-  const postResult = await redis.SREM(`liker: post${id}`, userId);
-  const userResult = await redis.SREM(`liker: user${id}`, userId);
-  const result = [postResult, userResult];
+  const result = await redis.SREM(`liker: post${id}`, userId);
   return result;
 };
 
@@ -108,7 +104,7 @@ module.exports = {
   incrementValue,
   decrementValue,
   findLikers,
-  findIsLiker,
+  findLiker,
   createLiker,
   deleteLiker,
 };
