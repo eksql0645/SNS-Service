@@ -7,12 +7,12 @@ refreshRouter.post('/', async (req, res, next) => {
     const userToken = req.headers['authorization']?.split(' ')[1];
     const refreshToken = req.headers['refresh'] && req.headers['refresh'];
     const redis = req.app.get('redis');
-    const token = await refreshService.checkExpiredToken(
+    const tokens = await refreshService.checkExpiredToken(
       userToken,
       refreshToken,
       redis
     );
-    res.status(201).json(token);
+    res.status(201).json(tokens);
   } catch (err) {
     next(err);
   }

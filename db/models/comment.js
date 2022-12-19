@@ -4,19 +4,22 @@ module.exports = class Comment extends Sequelize.Model {
   static init(sequelize) {
     return super.init(
       {
-        id: {
-          type: Sequelize.STRING(60),
+        group: {
+          type: Sequelize.INTEGER,
           allowNull: false,
-          primaryKey: true,
+        },
+        parentId: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
         },
         comment: {
-          type: Sequelize.STRING(200),
+          type: Sequelize.STRING(255),
           allowNull: false,
         },
       },
       {
         sequelize,
-        timestamps: true,
+        timestamps: false,
         underscored: true,
         modelName: 'Comment',
         tableName: 'comments',

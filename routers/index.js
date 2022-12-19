@@ -7,8 +7,8 @@ const refreshRouter = require('./refresh');
 const imageRouter = require('./image');
 
 router.use('/users', userRouter);
-router.use('/tokens', refreshRouter);
 router.use('/posts', postRouter);
+router.use('/tokens', refreshRouter);
 router.use('/auth', authRouter);
 router.use('/img', imageRouter);
 
